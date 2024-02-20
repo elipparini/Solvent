@@ -1,0 +1,287 @@
+liquidity11.sol		
+
+
+
+
+Property [liquidity11a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.03331923484802246s
+ (Compilation time: .311053777 [sec], Verification time: .140782207 [sec])
+
+
+
+
+liquidity12.sol		
+
+
+
+
+Property [liquidity12a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.031004905700683594s
+
+Property [liquidity12b_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.04964137077331543s
+ (Compilation time: .200251228 [sec], Verification time: .163242156 [sec])
+
+
+
+
+liquidity13.sol		
+
+
+
+
+Property [liquidity13b_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unknown
+liquid [in 1 steps]
+Solving time: 0.9008615016937256s
+
+Property [liquidity13a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 1.0002200603485107s
+ (Compilation time: .225596890 [sec], Verification time: 1.116723832 [sec])
+
+
+
+
+liquidity14.sol		
+
+
+
+
+Property [liquidity14c_liq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+		j: 1
+		resj = unsat
+		resj2 = unsat
+liquid [in 2 steps]
+Solving time: 19.404860496520996s
+
+Property [liquidity14d_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unknown
+liquid [in 2 steps]
+Solving time: 20.90902829170227s
+ (Compilation time: .273608888 [sec], Verification time: 21.107866444 [sec])
+
+
+
+
+liquidity15.sol		
+
+
+
+
+Property [liquidity15a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.022166967391967773s
+ (Compilation time: .213861150 [sec], Verification time: .128876282 [sec])
+
+
+
+
+liquidity18.sol		
+
+
+
+
+Property [liquidity18a_liq]
+	i: 0
+		j: 0
+		resj = unknown
+		resj2 = unsat
+liquid [in 1 steps]
+Solving time: 11.560574293136597s
+ (Compilation time: .224696307 [sec], Verification time: 11.673090187 [sec])
+
+
+
+
+liquidity19.sol		
+
+
+
+
+Property [liquidity19a_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unsat
+liquid [in 5 steps]
+Solving time: 0.03963065147399902s
+ (Compilation time: .230192512 [sec], Verification time: .198629506 [sec])
+
+
+
+
+liquidity1.sol		
+
+
+
+
+ (Compilation time: .207425176 [sec], Verification time: .103666521 [sec])
+
+
+
+
+liquidity2.sol		
+
+
+
+
+Property [liquidity2a_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unsat
+liquid [in 5 steps]
+Solving time: 0.04178643226623535s
+ (Compilation time: .222491582 [sec], Verification time: .208325345 [sec])
+
+
+
+
+liquidity3.sol		
+
+
+
+
+Property [liquidity3a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.03268313407897949s
+
+Property [liquidity3b_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unsat
+liquid [in 1 steps]
+Solving time: 0.05583620071411133s
+ (Compilation time: .223102293 [sec], Verification time: .159812942 [sec])
+
+
+
+
+liquidity4.sol		
+
+
+
+
+Property [liquidity4b_liq]
+	i: 0
+		j: 0
+		resj = unknown
+		resj2 = unsat
+liquid [in 1 steps]
+Solving time: 8.83482551574707s
+
+Property [liquidity4a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 8.891684532165527s
+ (Compilation time: .231567054 [sec], Verification time: 9.018326023 [sec])
+
+
+
+
+liquidity9.sol		
+
+
+
+
+Property [liquidity9a_nonliq]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+not liquid [in 1 steps]
+Solving time: 0.027564525604248047s
+
+Property [liquidity9b_liq]
+	i: 0
+		j: 0
+		resj = unsat
+		resj2 = unsat
+liquid [in 1 steps]
+Solving time: 0.05841803550720215s
+ (Compilation time: .267311984 [sec], Verification time: .178081882 [sec])
+
+
+
+
+NewOracleBet.sol		
+
+
+
+
+Property [liq1]
+	i: 0
+		j: 0
+		resj = sat
+		resj2 = sat
+		j: 1
+		resj = sat
+		resj2 = sat
+		j: 2
+		resj = sat
+		resj2 = sat
+		j: 3
+		resj = sat
+		resj2 = sat
+		j: 4
+		resj = sat
+		resj2 = sat
+not liquid [in 5 steps]
+Solving time: 0.25849056243896484s
+ (Compilation time: .296891955 [sec], Verification time: .776568607 [sec])
+
+
+
+
+OracleBet.sol		
+
+
+
+
+ (Compilation time: .295123134 [sec], Verification time: .152745651 [sec])
+
+
+
+
