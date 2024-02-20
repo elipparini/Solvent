@@ -278,12 +278,16 @@ for i in range(1, N):
 
 timeStart = time.time()
 for prop in {props_name}:
+    print()
     print('Property [' + prop + ']')
     for i, q in enumerate(queries[prop]):
+        print("\ti:" , i)
         liquid = False
         for j in range(0, len(q)):
+            print("\t\tj:", j)
             qj = q[j] 
             resj = s.check(qj)
+            print("\t\tresj =", resj)
             if resj == unsat:
                 liquid = True
                 break
