@@ -111,8 +111,11 @@ t_aw = [[[Int("t_aw_%s_%s_%s" % (i, m, j)) for j in range(A+1)]
 
 t_aw_q0 = [[Int("t_awq0_%s_%s" % (m, j)) for j in range(A+1)] for m in range(M)]
 
+print("s = SolverFor(\"LIA\")")
+s = SolverFor("LIA")
 
-s = Solver()
+#print("s = Solver()")
+#s = Solver()
 
 # initial state
 s.add(w[0] >= 0)
@@ -226,18 +229,25 @@ for prop in {'liquidity4b_liq','liquidity4a_nonliq'}:
         for j in range(0, len(q)):
             print("		j:", j)
             qj = q[j] 
-            s2 = Solver()
+
+            print("s2 = SolverFor(QF_LIA)")
+            s2 = SolverFor("QF_LIA")
+
+            #print("s2 = Solver()")
+            #s2 = Solver()
+
             s2.add(s.assertions())
             s2.add(qj)
             text= s2.to_smt2()
+            #print(text)
 
             resj = s.check(qj)
             print("		resj =", resj)
-            #print(s.reason_unknown())
+            print(s.reason_unknown())
 
             resj2 = s2.check()
             print("		resj2 =", resj2)
-            #print(s.reason_unknown())
+            print(s.reason_unknown())
 
             if resj == unsat or resj2 == unsat:      
             #if resj == unsat:

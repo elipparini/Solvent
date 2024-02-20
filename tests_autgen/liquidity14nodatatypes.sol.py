@@ -68,11 +68,11 @@ block_num_q0 = Int("block_num_q0")
 block_num_q1 = Int("block_num_q1")
 
 
-Proc = Datatype('Proc')
-Proc.declare('unlock')
-Proc.declare('pay')
+#Proc = Datatype('Proc')
+#Proc.declare('unlock')
+#Proc.declare('pay')
 
-Proc = Proc.create()
+#Proc = Proc.create()
 
 # Contract's state variables
 
@@ -84,9 +84,9 @@ b_q1 = Bool("bq1")
 t_b_q1 = [Bool("t_bq1_%s" % (m)) for m in range(M)]
 
 # Called procedure
-f = [Const("f_%s" % (i), Proc) for i in range(N+1)]
-f_q0 = Const("f_q0", Proc)
-f_q1 = Const("f_q1", Proc)
+f = [Int("f_%s" % (i)) for i in range(N+1)]
+f_q0 = Int("f_q0")
+f_q1 = Int("f_q1")
 
 
 # users' wallets
@@ -125,7 +125,6 @@ t_aw = [[[Int("t_aw_%s_%s_%s" % (i, m, j)) for j in range(A+1)]
 
 t_aw_q0 = [[Int("t_awq0_%s_%s" % (m, j)) for j in range(A+1)] for m in range(M)]
 t_aw_q1 = [[Int("t_awq1_%s_%s" % (m, j)) for j in range(A+1)] for m in range(M)]
-
 
 print("s = SolverFor(\"LIA\")")
 s = SolverFor("LIA")
@@ -179,16 +178,16 @@ def user_is_legit(xa1):
     return And(xa1 >= 0, xa1 <= A)
 
 
-def user_has_not_already_played(xa, xa1, f, i):
-    return Not(Or([And(xa[k] == xa1, f[k] == Proc.pay) for k in range(i)]))
+#def user_has_not_already_played(xa, xa1, f, i):
+#    return Not(Or([And(xa[k] == xa1, f[k] == Proc.pay) for k in range(i)]))
 
 
 def user_is_not_hard_coded(xa1):
     return Not(Or([xa1 == hc_i for hc_i in hard_coded_list]))
 
 
-def user_is_fresh(xa, xa1, f, i):
-    return And(user_is_not_hard_coded(xa1), user_has_not_already_played(xa, xa1, f, i))
+#def user_is_fresh(xa, xa1, f, i):
+#    return And(user_is_not_hard_coded(xa1), user_has_not_already_played(xa, xa1, f, i))
 
 # transition rules
 
@@ -196,7 +195,7 @@ def step_trans(f1, xa1, xn1, pay_amount, aw1, aw2, w1, w2, t_aw, t_w, block_num1
     return And(And(xa1 >= 0, xa1 <= A, xn1 >= 0),
                And([aw1[j] >= 0 for j in range(A+1)]),
                block_num2 >= block_num1,
-               If(f1 == Proc.unlock,
+               If(f1 == 0,
 	unlock(xa1, xn1, aw1, aw2, w1, w2, t_aw, t_w, block_num1, bNow, bNext, t_b),
 		pay(xa1, xn1, pay_amount, aw1, aw2, w1, w2, t_aw, t_w, block_num1, bNow, bNext, t_b)))
 
@@ -271,7 +270,7 @@ queries['liquidity14c_liq'] = [[p_liquidity14c_liq_1(i),p_liquidity14c_liq_2(i)]
 
 
 timeStart = time.time()
-for prop in ['liquidity14c_liq','liquidity14d_liq']:
+for prop in ['liquidity14d_liq', 'liquidity14c_liq']:
     print()
     print('Property [' + prop + ']')
     for i, q in enumerate(queries[prop]):
@@ -280,13 +279,10 @@ for prop in ['liquidity14c_liq','liquidity14d_liq']:
         for j in range(0, len(q)):
             print("		j:", j)
             qj = q[j] 
-            
-            print("s2 = SolverFor(QF_LIA)")
-            s2 = SolverFor("QF_LIA")
-
             #print("s2 = Solver()")
             #s2 = Solver()
-
+            print("s2 = SolverFor(LIA)")
+            s2 = SolverFor("LIA")
             s2.add(s.assertions())
             s2.add(qj)
             text= s2.to_smt2()
@@ -298,9 +294,9 @@ for prop in ['liquidity14c_liq','liquidity14d_liq']:
             resj2 = s2.check()
             print("		resj2 =", resj2)
             #print(s.reason_unknown())
-
-            if resj == unsat or resj2 == unsat:      
-            #if resj == unsat:
+            #time.sleep(3)
+            #if resj == unsat or resj2 == unsat:      
+            if resj2 == unsat:
                 liquid = True
                 break
         #if not liquid:     # commented for debugging
