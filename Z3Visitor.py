@@ -300,7 +300,7 @@ for prop in {props_name}:
             #print(s.reason_unknown())
 
             if resj == unsat or resj2 == unsat:      
-            if resj == unsat:
+            #if resj == unsat:
                 liquid = True
                 break
         #if not liquid:     # commented for debugging
