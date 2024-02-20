@@ -17,7 +17,7 @@ contract C11 {
 
 
 // not liquid
-property {
+property liquidity11a_nonliq {
     Forall xa
     [
       true
@@ -32,7 +32,7 @@ property {
 
 /*
 // liquid
-property {
+property liquidity11b_liq {
     Forall xa
     [
       xa != 0

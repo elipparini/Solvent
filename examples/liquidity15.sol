@@ -18,7 +18,7 @@ contract C15 {
 } 
 
 // not liquid
-property {
+property liquidity15a_nonliq {
     Forall xa
     [
       true

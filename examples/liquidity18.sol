@@ -17,7 +17,7 @@ contract C18 {
 }
 
 // liquid
-property {
+property liquidity18a_liq {
     Forall xa
     [
       true

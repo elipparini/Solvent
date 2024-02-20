@@ -12,12 +12,13 @@ contract C2 {
   
 }
 
-property liq1 {
+// liquid
+property liquidity2a_liq {
     Forall xa
     [
       true
         ->
-      Exists tx [1, xa]
+      Exists tx [5, xa]
       [
         ((app_tx_st.balance[xa] == st.balance[xa]  + st.balance))
       ]

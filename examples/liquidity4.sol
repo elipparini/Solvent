@@ -12,7 +12,7 @@ contract C4 {
 
 
 // not liquid
-property {
+property liquidity4a_nonliq {
     Forall xa
     [
       true
@@ -25,9 +25,8 @@ property {
 }
 
 
-/*
 // liquid
-property {
+property liquidity4b_liq {
     Forall xa
     [
       st.balance > 1
@@ -38,4 +37,3 @@ property {
       ]
     ]
 }
-*/
