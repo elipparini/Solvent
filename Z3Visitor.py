@@ -21,6 +21,9 @@ class Z3Visitor(TxScriptVisitor):
         self.__tx_sender = 'xa'
         self.__prop_nested_i = set()
         self.__n_transactions = 1
+        self.__pi = 1
+        self.__prop_name = ''
+        self.__prop_names = set()
         self.__maps = set()
         # N = upper bound on the length of trace
         self.__N = N
@@ -94,6 +97,11 @@ t_{g} = [[{ty}("t_{g}_%s_%s" % (i, m)) for m in range(M)] for i in range(N+1)]''
                     contract_globals += '''
 {g}_q{i} = {ty}("{g}q{i}")
 t_{g}_q{i} = [{ty}("t_{g}q{i}_%s" % (m)) for m in range(M)]'''.format(i=i, g=g_var.text, ty=g_type)
+
+        prop_queries = 'queries = {}\n'
+        for n in self.__prop_names:
+            q = ','.join([f'p_{n}_{i}(i)' for i in range(1, self.__n_transactions+1)])
+            prop_queries += f'queries[\'{n}\'] = [[{q}] for i in range(1, N)]\n'
 
         res = '''
 from z3 import *
@@ -266,38 +274,25 @@ for i in range(1, N):
 
 {props}
 
-queries = [[{pis}] for i in range(1, N)] 
+{queries}
 
 timeStart = time.time()
-for i, q in enumerate(queries):
-    print("i:" , i)
-    liquid = False
-    for j in range(0, len(q)):
-        print("  j:", j)
-        qj = q[j] 
-
-        s2 = Solver()
-        s2.add(s.assertions())
-        s2.add(qj)
-        text= s2.to_smt2()
-
-        resj = s.check(qj)
-        print("  resj =", resj)
-        #print(s.reason_unknown())
-
-        resj2 = s2.check()
-        print("  resj2 =", resj2)
-        #print(s.reason_unknown())
-
-        if resj == unsat or resj2 == unsat:      
-            liquid = True
+for prop in {props_name}:
+    print('Property [' + prop + ']')
+    for i, q in enumerate(queries[prop]):
+        liquid = False
+        for j in range(0, len(q)):
+            qj = q[j] 
+            resj = s.check(qj)
+            if resj == unsat:
+                liquid = True
+                break
+        if not liquid:
             break
-    #if not liquid:     # commented for debugging
-    #    break
-if not liquid: print("not liquid [in {n_trans} steps]")
-else: print("liquid [in {n_trans} steps]")
-timeTot = time.time() - timeStart
-print("Solving time: " + str(timeTot) + "s")
+    if not liquid: print("not liquid [in {n_trans} steps]")
+    else: print("liquid [in {n_trans} steps]")
+    timeTot = time.time() - timeStart
+    print("Solving time: " + str(timeTot) + "s")
 
 # for i, q in enumerate(queries):
 #     timeStart = time.time()
@@ -347,11 +342,13 @@ print("Solving time: " + str(timeTot) + "s")
         constr_args_0 = (','.join([s+'[0]' for s in self.__proc_args['constructor']])+', ' if 'constructor' in self.__proc_args and self.__proc_args['constructor'] else ''),
         contract_globals = contract_globals, 
         max_nesting = self.__max_nesting,
-        props = props[0],
-        pis = ','.join([f'p{i}(i)' for i in range(1, self.__n_transactions+1)]),
+        props = '\n'.join(props),
+        # pis = ','.join([f'p{i}(i)' for i in range(1, self.__n_transactions+1)]),
+        queries = prop_queries,
+        props_name = '{' + ','.join(['\''+n+'\'' for n in self.__prop_names]) + '}',
         n_trans = self.__n_transactions 
     )
-        return res
+        return res 
 
 
     # Visit a parse tree produced by TxScriptParser#declsExpr.
@@ -373,6 +370,8 @@ print("Solving time: " + str(timeTot) + "s")
 
     # Visit a parse tree produced by TxScriptParser#propertyExpr.
     def visitPropertyExpr(self, ctx:TxScriptParser.PropertyExprContext):
+        self.__prop_name = ctx.name.text
+        self.__prop_names.add(self.__prop_name)
         return self.visit(ctx.phi)
 
 
@@ -859,9 +858,6 @@ def {name}(xa1, xn1, {args}awNow, awNext, wNow, wNext, t_aw, t_w, block_num{glob
         self.__n_transactions = int(ctx.nTrans.text)
         self.__tx_sender = 'xa_q' if ctx.sender.text == 'xa' else ctx.sender.text.replace('st.', '')+'[i]'
         condition = self.visit(ctx.where)
-        self.__visit_properties_body = True
-        body = self.visit(ctx.body)
-        self.__visit_properties_body = False
         step_trans_args = [self.__args_map[a] for a in self.__args_map if 'constructor' not in self.__args_map[a]]
         global_args_q = (', ' + ', '.join([g.text+'_q{i}, *t_'+g.text+'_q{i}' for (g, _) in self.__globals])) if self.__globals else ''
         func_args_q = (', ' + ', '.join([s+'_q{i}' for s in step_trans_args]) if step_trans_args else '')
@@ -869,6 +865,10 @@ def {name}(xa1, xn1, {args}awNow, awNext, wNow, wNext, t_aw, t_w, block_num{glob
         global_args_phi = (', ' + ', '.join([g.text+'_q{j}, '+g.text+'_q{i}, t_'+g.text+'_q{i}' for (g, _) in self.__globals])) if self.__globals else ''
         pi = ''
         for i in range(1, self.__n_transactions+1):  
+            self.__pi = i
+            self.__visit_properties_body = True
+            body = self.visit(ctx.body)
+            self.__visit_properties_body = False
             pi += self.createPi(i, agent, condition, body, global_args_q, func_args_q, global_args_phi0, global_args_phi)
         return pi
 
@@ -885,7 +885,7 @@ def {name}(xa1, xn1, {args}awNow, awNext, wNow, wNext, t_aw, t_w, block_num{glob
             else:
                 step_trans += f'Not(step_trans(f_q{i}, {self.__tx_sender}, xn_q{i}'+func_args_q.format(i=i)+f', aw_q{i-1}, aw_q{i}, w_q{i-1}, w_q{i}, t_aw_q{i}, t_w_q{i}, block_num_q{i-1}, block_num_q{i}, i+{i}'+global_args_phi.format(i=i,j=i-1)+')),\n'
         return f'''
-def p{nTrans}(i):
+def p_{self.__prop_name}_{nTrans}(i):
     {t_awq_lists}
     return And(
         Exists([{agent}], And(user_is_legit({agent}), {condition},
@@ -933,19 +933,23 @@ def p{nTrans}(i):
             return ctx.v.text
         else:
             if 'app_tx_st' in ctx.v.text:
-                i = f'_q{self.__n_transactions-1}'
+                i = f'_q{self.__n_transactions-1-(self.__n_transactions-self.__pi)}'
             else:
                 i = '[i]'
             if 'st.balance' in ctx.v.text and '[' in ctx.v.text and ']' in ctx.v.text:
                 ag = ctx.v.text[ctx.v.text.index('[')+1:ctx.v.text.index(']')]
-                self.__prop_nested_i.add(ag+'_q')#(ag+'[i]')
-                return f'aw{i}[{ag}_q]'#f'aw{i}[{ag}[i]]'
+                if ag == 'xa':
+                    self.__prop_nested_i.add(ag+'_q')#(ag+'[i]')
+                    return f'aw{i}[{ag}_q]'#f'aw{i}[{ag}[i]]'
+                else:
+                    self.__prop_nested_i.add(ag+'[i]')#(ag+'[i]')
+                    return f'aw{i}[{ag}[i]]'#f'aw{i}[{ag}[i]]'
             if 'st.balance' in ctx.v.text:
                 return f'w{i}'
             if 'st.block.number' in ctx.v.text:
                 return f'block_num{i}'
             if 'tx.msg.value' in ctx.v.text:
-                return 'xn'+f'_q{self.__n_transactions-1}'
+                return 'xn'+f'_q{self.__n_transactions-1-(self.__n_transactions-self.__pi)}'
             if 'tx.msg.sender' in ctx.v.text:
                 return 'tx_sender'
             if ctx.v.text.replace('st.','') in self.__args_map:
