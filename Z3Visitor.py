@@ -286,13 +286,25 @@ for prop in {props_name}:
         for j in range(0, len(q)):
             print("\t\tj:", j)
             qj = q[j] 
+            s2 = Solver()
+            s2.add(s.assertions())
+            s2.add(qj)
+            text= s2.to_smt2()
+
             resj = s.check(qj)
             print("\t\tresj =", resj)
+            #print(s.reason_unknown())
+
+            resj2 = s2.check()
+            print("\t\tresj2 =", resj2)
+            #print(s.reason_unknown())
+
+            if resj == unsat or resj2 == unsat:      
             if resj == unsat:
                 liquid = True
                 break
-        if not liquid:
-            break
+        #if not liquid:     # commented for debugging
+        #    break
     if not liquid: print("not liquid [in {n_trans} steps]")
     else: print("liquid [in {n_trans} steps]")
     timeTot = time.time() - timeStart
