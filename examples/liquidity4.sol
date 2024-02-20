@@ -10,7 +10,32 @@ contract C4 {
   }
 }
 
+
+// not liquid
 property {
-  Forall xa 
-      [balance>1 -> Exists s (s, xa) can_withdraw(balance - 1)]
+    Forall xa
+    [
+      true
+        ->
+      Exists tx [1, xa]
+      [
+        ((app_tx_st.balance[xa] == st.balance[xa]  + st.balance))
+      ]
+    ]
 }
+
+
+/*
+// liquid
+property {
+    Forall xa
+    [
+      st.balance > 1
+        ->
+      Exists tx [1, xa]
+      [
+        ((app_tx_st.balance[xa] == st.balance[xa]  + (st.balance - 1)))
+      ]
+    ]
+}
+*/

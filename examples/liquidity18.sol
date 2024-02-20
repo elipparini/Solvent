@@ -15,3 +15,16 @@ contract C18 {
   }
 
 }
+
+// liquid
+property {
+    Forall xa
+    [
+      true
+        ->
+      Exists tx [1, xa]
+      [
+        ((app_tx_st.balance[xa] == st.balance[xa]  + st.balance))
+      ]
+    ]
+}

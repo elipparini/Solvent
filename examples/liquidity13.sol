@@ -17,3 +17,31 @@ contract C13 {
   }
 
 }
+
+/*
+// not liquid
+property {
+    Forall xa
+    [
+      true
+        ->
+      Exists tx [1, xa]
+      [
+        ((app_tx_st.balance[xa] == st.balance[xa]  + st.balance))
+      ]
+    ]
+}
+*/
+
+// liquid 
+property {
+    Forall xa
+    [
+      st.b == false
+        ->
+      Exists tx [1, xa]
+      [
+        ((app_tx_st.balance[xa] == st.balance[xa]  + st.balance))
+      ]
+    ]
+}
