@@ -33,6 +33,9 @@ endif
 ifndef Trace_Based
     Trace_Based := $(DEFAULT_Trace_Based)
 endif
+ifndef SMT
+    SMT := $(DEFAULT_SMT)
+endif
 
 compile: 
 	python3 ./main.py $(Contract) $(N_Transactions) $(N_Participants) $(Can_Transactions_Arrive_Any_time) $(Fixed_Iteration)
@@ -71,7 +74,7 @@ run:
 		if $(State_Based); then \
 			for file in $$(find $$Prop/statebased -type f -name '*.smt2' | sort); do \
 				foundSAT=false; \
-				output=$$(time ; timeout $(Timeout) $$SMT $$file $$smt_flag); \
+				output=$$($(SMT) $$file $$smt_flag); \
 				echo $$output; \
 				if echo "$$output" | grep -q "error"; then \
 					foundUNSAT=true; \
@@ -91,8 +94,10 @@ run:
 				for i in $$(find $$Prop/tracebased/ -mindepth 1 -maxdepth 1 -type d | sort); do \
 					foundUNSAT=false; \
 					for file in $$(find $$i -type f -name '*.smt2' | sort); do \
+						echo file: $$file; \
+						echo SMT: $(SMT); \
 						foundSAT=false; \
-						output=$$(date ; timeout $(Timeout) $$SMT $$file $$smt_flag); \
+						output=$$($(SMT) $$file $$smt_flag); \
 						echo $$output; \
 						if echo "$$output" | grep -q "error"; then \
 							foundUNSAT=true; \
