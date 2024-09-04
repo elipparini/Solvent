@@ -1,9 +1,11 @@
 contract C4 {
   int a; 
   int b; 
+  int c; 
   constructor () {
     a = 0;
     b = 0;
+    c = 0;
     skip
   }
 
@@ -23,6 +25,32 @@ property liquidity1_liquid {
       Exists tx [1, xa]
       [
         ((<tx>balance[xa] == balance[xa]  + balance))
+      ]
+    ]
+}
+
+
+property safety_true {
+    Forall xa
+    [
+      true
+        ->
+      Exists tx [1, xa]
+      [
+        (a == b)
+      ]
+    ]
+}
+
+
+property safety_false {
+    Forall xa
+    [
+      true
+        ->
+      Exists tx [1, xa]
+      [
+        (a == c)
       ]
     ]
 }
