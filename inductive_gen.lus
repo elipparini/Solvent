@@ -1,0 +1,102 @@
+
+type functions = enum { dummy, pay_func };
+node inductive (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+const starting_a : int = 0;
+const starting_b : int = 0;
+var w: int;
+var w_0: int;
+var aw_1: int;
+var aw_2: int;
+var aw_1_0: int;
+var aw_2_0: int;
+var a : int;
+var a_0 : int;
+var b : int;
+var b_0 : int;
+let
+    if f = pay_func then
+	if ((xa = 1 or xa = 2) and (starting_a -> pre a) = (starting_b -> pre b) and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and xn=0) then 
+
+w_0 = (starting_w -> pre w) - pay_func_amount;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) + pay_func_amount;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) + pay_func_amount;
+fi
+
+a_0 = ((starting_a -> pre a)+1);
+b_0 = ((starting_b -> pre b)+1);
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	a = a_0;
+	b = b_0; 
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	a = (starting_a -> pre a);
+	b = (starting_b -> pre b);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	a = (starting_a -> pre a);
+	b = (starting_b -> pre b);
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int; a_nx : int; b_nx : int; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+        if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and a = b and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
+ w_0 = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0 = aw_1 + pay_func_amount_tx and
+	aw_2_0 = aw_2
+else
+	aw_1_0 = aw_1 and
+	aw_2_0 = aw_2 + pay_func_amount_tx
+ and a_0 = (a+1) and b_0 = (b+1)and 
+	w_nx = w_0 and 
+	aw_1_nx = aw_1_0
+	 and aw_2_nx = aw_2_0 and 
+	a_nx = a_0
+	 and b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	a_nx = a
+	 and b_nx = b
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	a_nx = a
+	and b_nx = b
+
+        )
+    );
+
+tel
+        

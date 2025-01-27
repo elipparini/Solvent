@@ -1,4 +1,4 @@
-from Z3Visitor import *
+from Kind2Visitor import *
 from TypeVisitor import *
 
 from antlr4.error.ErrorListener import ErrorListener
@@ -28,7 +28,7 @@ def parse(pattern):
     fixed_iteration = int(sys.argv[5]) if len(sys.argv) == 6 and sys.argv[5] != '-1' else -1
 
     type_visitor = TypeVisitor()
-    visitor = Z3Visitor(int(sys.argv[2]), int(sys.argv[3]), True, can_transactions_arrive_any_time, fixed_iteration)
+    visitor = Kind2Visitor(int(sys.argv[2]), int(sys.argv[3]), True, can_transactions_arrive_any_time, fixed_iteration)
 
     isExist = os.path.exists('./out')
     if not isExist:
@@ -41,7 +41,7 @@ def parse(pattern):
     try:
         with open('./out/outputTrace.py', 'w') as file:
             file.write(visitor.visit(tree))
-        visitor = Z3Visitor(int(sys.argv[2]), int(sys.argv[3]), False, can_transactions_arrive_any_time, fixed_iteration)
+        visitor = Kind2Visitor(int(sys.argv[2]), int(sys.argv[3]), False, can_transactions_arrive_any_time, fixed_iteration)
         with open('./out/outputState.py', 'w') as file:
             file.write(visitor.visit(tree))
     except Exception as e:

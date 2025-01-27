@@ -175,7 +175,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solvent: a formal verification tool to verify Smart Contracts.")
     parser.add_argument("contract", type=str, help="Path to the smart contract file (.sol)")
     parser.add_argument("num_transactions", type=int, help='Max number of transactions of the bounded model checking problem.')
-    parser.add_argument("solver", type=str, help="Name of the SMT solver (e.g., z3 or cvc5)")
+    parser.add_argument("solver", type=str, help="Name of the SMT solver (e.g., z3, cvc5, or kind2)")
     parser.add_argument("-t", "--timeout", type=int, help="Timeout for the verification process (optional)")
 
     args = parser.parse_args()
@@ -185,5 +185,8 @@ if __name__ == "__main__":
     solver = args.solver
     timeout = args.timeout if args.timeout else 1500
     
-    run_makefile(contract_path, num_transactions, solver, timeout)
+    if solver not in ['z3', 'cvc5']:
+        run_makefile(contract_path, num_transactions, solver, timeout)
+    else:
+        pass
     

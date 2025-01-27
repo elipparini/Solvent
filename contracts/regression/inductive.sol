@@ -1,4 +1,4 @@
-contract C4 {
+contract Inductive {
   int a; 
   int b; 
   constructor () {
@@ -22,7 +22,7 @@ property liquidity1_liquid {
         ->
       Exists tx [1, xa]
       [
-        ((<tx>balance[xa] == balance[xa]  + balance))
+        ((<tx>balance[xa] == balance[xa] + balance))
       ]
     ]
 }
