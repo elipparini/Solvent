@@ -1,4 +1,3 @@
-
 type functions = enum { dummy, pay_func };
 node inductive (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
 (*@contract
@@ -20,7 +19,7 @@ var b : int;
 var b_0 : int;
 let
     if f = pay_func then
-	if (xn=0 and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (starting_a -> pre a) = (starting_b -> pre b) and (xa = 1 or xa = 2)) then 
+	if ((xa = 1 or xa = 2) and (starting_a -> pre a) = (starting_b -> pre b) and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and xn=0) then 
 
 w_0 = (starting_w -> pre w) - pay_func_amount;
 if (xa = 1) then
@@ -58,7 +57,8 @@ forall (xa_tx: int;)
     or
     exists (
             f_tx: functions; pay_func_amount_tx: int;  /* Transition vars */
-            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; a_nx : int; a_0_nx : int; b_nx : int; b_0_nx : int; /* Next state vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int; a_nx : int; b_nx : int; /* Next state vars */
+            w_0_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; a_0_nx : int; b_0_nx : int; /* Temp next state vars */
     )
     (
         (   /* condition */
@@ -69,18 +69,19 @@ forall (xa_tx: int;)
         if f_tx = pay_func then
 	if ((xa_tx = 1 or xa_tx = 2) and a = b and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
  w_0_nx = w - pay_func_amount_tx and
-if (xa_tx = 1) then
+(if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
 else
 	aw_1_0_nx = aw_1 and
-	aw_2_0_nx = aw_2 + pay_func_amount_tx
- and a_0_nx = (a+1) and b_0_nx = (b+1)and 
+	aw_2_0_nx = aw_2 + pay_func_amount_tx)
+ and a_0_nx = (a+1) and b_0_nx = (b+1)
+ and 
 	w_nx = w_0_nx and 
 	aw_1_nx = aw_1_0_nx
 	 and aw_2_nx = aw_2_0_nx and 
-	a_nx = a_0
-	 and b_nx = b_0 
+	a_nx = a_0_nx
+	 and b_nx = b_0_nx 
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1

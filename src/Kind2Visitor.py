@@ -44,6 +44,7 @@ class Kind2Visitor(TxScriptVisitor):
         self.__fixed_iteration = fixed_iteration
         self.__defaultAddress = 0
         self.__ctx = None
+        self.__payable = False
         self.__not_valid_names = ['sender', 'msg.sender', 'value', 'msg.value', 'balance']
         if not self.__fixed_iteration == -1:
             self.__N = fixed_iteration
@@ -94,14 +95,14 @@ class Kind2Visitor(TxScriptVisitor):
             contract_globals += [f'const starting_{g_var.text} : {g_type} = {g_init_value};']
             # I assume that the visit of the constructor has generated such information
         contract_globals += ['var w: int;']
-        contract_globals += [f'var w_{i}: int;' for i in range(self.__M)]
+        contract_globals += [f'var w_{i}: int;' for i in range(self.__max_nesting + 1)]
         contract_globals += [f'var aw_{ag}: int;' for ag in range(1, self.__A+1)]
-        contract_globals += [f'var aw_{ag}_{i}: int;' for ag in range(1, self.__A+1) for i in range(self.__M)]
+        contract_globals += [f'var aw_{ag}_{i}: int;' for ag in range(1, self.__A+1) for i in range(self.__max_nesting + 1)]
         for (g_var,g_type) in self.__globals:
             if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                 g_type = 'int'
             contract_globals += [f'var {g_var.text} : {g_type};']
-            contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__M)]
+            contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__max_nesting + 1)]
         contract_globals = '\n'.join(contract_globals)
         
         #commented out because args now are a single variable in the lus input
@@ -163,7 +164,7 @@ class Kind2Visitor(TxScriptVisitor):
             # body += f'\t{self.__functions[keys[-1]]}\n'
             # functions_call += '\t'*n_tabs + keys[-1] + '(xa1, xn, ' + (','.join(self.__proc_args[keys[-1]])+', ' if self.__proc_args[keys[-1]] else '') + 'aw1, aw2, w1, w2, t_aw, t_w, block_num1' + ((', ' + ', '.join([g.text+'Now, '+g.text+'Next, t_'+g.text for (g, _) in self.__globals])) if self.__globals else '') + ', err)'
             body += 'fi'
-
+        all_props = '\n'.join([prop for prop in props])
         res = f'''
 type functions = enum {{ dummy, {functions} }};
 node {ctx.name.text.lower()} ({contract_args}) returns();
@@ -174,7 +175,7 @@ node {ctx.name.text.lower()} ({contract_args}) returns();
 {contract_globals}
 let
     {body}
-    {props[0]}
+    {all_props}
 tel
         '''.replace('skip and', '').replace('skip', '')
         
@@ -192,9 +193,9 @@ tel
     def visitDeclsExpr(self, ctx:TxScriptParser.DeclsExprContext):
         decls = []
         for decl in ctx.declExpr():
+            self.__M = -1
             decls.append(self.visit(decl))
-            self.__max_nesting = max(self.__nesting_w, self.__max_nesting)
-            self.__max_nesting = max(self.__nesting_aw, self.__max_nesting)
+            self.__max_nesting = max(self.__M, self.__max_nesting)
         return decls
     
 
@@ -324,19 +325,42 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#payableFunDecl.
     def visitPayableFunDecl(self, ctx:TxScriptParser.PayableFunDeclContext):
+        self.__payable = True
         self.__nesting_w = 1
-        self.__nesting_aw = 0
-        self.__t_curr_w = 't_w[0]'
-        self.__t_new_w = 't_w[1]'
-        self.__t_curr_a = 'awNow'
-        self.__t_new_a = 't_aw[0]'
+        self.__nesting_aw = 1
+        if self.__visit_properties:
+            self.__t_curr_w = 'w'
+            self.__t_new_w = 'w_0_nx'
+            self.__t_curr_a = [f'aw_{i}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0_nx' for i in range(self.__A+1)]
+        else:
+            self.__t_curr_w = '(starting_w -> pre w)'
+            self.__t_new_w = 'w_0'
+            self.__t_curr_a = [f'(starting_aw_{i} -> pre aw_{i})' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0' for i in range(self.__A+1)]
         self.__proc.add(ctx.name.text + '_func')
         self.__prefix = ctx.name.text + '_func'
         for k in self.__globals_index:
             self.__globals_index[k] = 0
         self.__requires = set()
-        return self.visitFun(ctx, 'And(t_w[0] == wNow + xn')
-        # return self.visitFun(ctx, 'And(t_w[0] == wNow + xn, t_aw[0][xa1] == awNow - xn, for (...)')
+        if not self.__visit_properties: 
+            self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
+            self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = self.send('xa', 'xn', negative=True)
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
+            self.__t_new_w = 'w_' + str(self.__nesting_w)
+        else:
+            self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
+            self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = self.send('xa_tx', 'xn_tx', negative=True)
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
+            self.__t_new_w = 'w_' + str(self.__nesting_w) + '_nx'
+        self.__M += 1        
+        return self.visitFun(ctx, add_to_body)
 
 
     # Visit a parse tree produced by TxScriptParser#nonPayableFunDecl.
@@ -345,9 +369,9 @@ tel
         self.__nesting_aw = 0
         if self.__visit_properties:
             self.__t_curr_w = 'w'
-            self.__t_new_w = 'w_0'
+            self.__t_new_w = 'w_0_nx'
             self.__t_curr_a = [f'aw_{i}' for i in range(self.__A+1)]
-            self.__t_new_a = [f'aw_{i}_0' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0_nx' for i in range(self.__A+1)]
         else:
             self.__t_curr_w = '(starting_w -> pre w)'
             self.__t_new_w = 'w_0'
@@ -364,16 +388,14 @@ tel
         else:
             self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
         return self.visitFun(ctx, '')
-        # return self.visitFun(ctx, 'If(Not(xn==0), next_state_tx(awNow, awNext, wNow, wNext{global_args_next_state_tx})'.format(
-        #     global_args_next_state_tx = (', ' + ', '.join([(g.text + 'Now' if self.__globals_index[g.text]+self.__globals_modifier < 0 else 't_'+g.text + '['+str(self.__globals_index[g.text]+self.__globals_modifier)+']')+', '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else ''
-        # ))
 
 
     # Visit a parse tree produced by TxScriptParser#funDecl.
-    def visitFun(self, ctx, reqs):
+    def visitFun(self, ctx, add_to_body):
         args = self.visit(ctx.args)
         self.__add_last_cmd = True
         body = self.visit(ctx.cmds)
+        body = add_to_body + '\n' + body
         if self.__prefix == 'constructor':
             for (g, ty) in self.__globals:
                 if self.__globals_index[g.text] == 0:
@@ -415,6 +437,8 @@ tel
             same += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = aw_{i}' for i in range(1, self.__A+1)])
             same += ' and \n\t' + '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, _) in self.__globals]) if self.__globals else ''
     
+        
+
         if self.__requires:
             req = ' and '.join(self.__requires)
             if self.__visit_properties:
@@ -471,9 +495,15 @@ tel
         return self.visitChildren(ctx)
 
 
-    def send(self, sender, amount):
+    def send(self, sender, amount, negative=False):
+        if not negative:
+            op1 = '-'
+            op2 = '+'
+        else:
+            op1 = '+'
+            op2 = '-'
         # [ for i in range(1, self.__A+1) ]
-        res = f'{self.__t_new_w} = {self.__t_curr_w} - {amount}'
+        res = f'{self.__t_new_w} = {self.__t_curr_w} {op1} {amount}'
         if self.__visit_properties:
             res += ' and\n'
         else:
@@ -488,7 +518,7 @@ tel
                 res += ' then\n'
             for ag1 in range(1, self.__A+1):
                 if ag == ag1:
-                    res += f'\t{self.__t_new_a[ag1]} = {self.__t_curr_a[ag1]} + {amount}'
+                    res += f'\t{self.__t_new_a[ag1]} = {self.__t_curr_a[ag1]} {op2} {amount}'
                 else:
                     res += f'\t{self.__t_new_a[ag1]} = {self.__t_curr_a[ag1]}'
                 if self.__visit_properties:
@@ -541,10 +571,16 @@ tel
         res = self.send(sender, left)
         self.__requires.add(send_chk)
         
-        self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
-        self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
-        self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
-        self.__t_new_w = 'w_' + str(self.__nesting_w)
+        if not self.__visit_properties:
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
+            self.__t_new_w = 'w_' + str(self.__nesting_w)
+        else:
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
+            self.__t_new_w = 'w_' + str(self.__nesting_w) + '_nx'
         self.__M += 1
         return res
 
@@ -608,7 +644,7 @@ tel
             right = right.replace(index, 'j')
             return f'And([Or(j!={str(index)}, t_{left}[{str(i)}] == {right}) for j in range(A+1)])' 
         else:
-            return left+'_'+str(i) + ' = ' + right + (';' if not self.__visit_properties else '')
+            return left+'_'+str(i) + ('_nx' if self.__visit_properties else '') + ' = ' + right + (';' if not self.__visit_properties else '')
     
 
     # Visit a parse tree produced by TxScriptParser#assignMapCmd.
@@ -814,7 +850,7 @@ tel
     def visitNeqExpr(self, ctx:TxScriptParser.NeqExprContext):
         left = self.visit(ctx.left)
         right = self.visit(ctx.right)
-        return left + '!=' + right
+        return 'not(' + left + '=' + right + ')'
 
 
     # # Visit a parse tree produced by TxScriptParser#variableExpr.
@@ -924,12 +960,12 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#andExpr.
     def visitAndExpr(self, ctx:TxScriptParser.AndExprContext):
-        return 'And(' + self.visit(ctx.left) + ',' + self.visit(ctx.right) + ')'
+        return '(' + self.visit(ctx.left) + ' and ' + self.visit(ctx.right) + ')'
     
 
     # Visit a parse tree produced by TxScriptParser#orExpr.
     def visitOrExpr(self, ctx:TxScriptParser.OrExprContext):
-        return 'Or(' + self.visit(ctx.left) + ',' + self.visit(ctx.right) + ')'
+        return '(' + self.visit(ctx.left) + ' or ' + self.visit(ctx.right) + ')'
 
 
     # # Visit a parse tree produced by TxScriptParser#orWithdrawExpr.
@@ -958,16 +994,17 @@ tel
     def visitQslf(self, ctx:TxScriptParser.QslfContext):
         user_is_legit = ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)])
         transition_vars = 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
+        if self.__payable: transition_vars += ' xn_tx: int;'
         contract_globals = []
         contract_globals += ['w_nx: int;']
-        contract_globals += [f'w_{i}: int;' for i in range(self.__M)]
+        contract_globals += [f'w_{i}_nx: int;' for i in range(self.__M + 1)]
         contract_globals += [f'aw_{ag}_nx: int;' for ag in range(1, self.__A+1)]
-        contract_globals += [f'aw_{ag}_{i}: int;' for ag in range(1, self.__A+1) for i in range(self.__M)]
+        contract_globals += [f'aw_{ag}_{i}_nx: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
         for (g_var,g_type) in self.__globals:
             if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                 g_type = 'int'
             contract_globals += [f'{g_var.text}_nx : {g_type};']
-            contract_globals += [f'{g_var.text}_{i} : {g_type};' for i in range(self.__M)]  # double check when we start reusing maps!
+            contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__M + 1)]  # double check when we start reusing maps!
         next_state_vars = ' '.join(contract_globals)
         # condition = self.visit(ctx.where) # skipped for now, but to be integrated in case is not true!
         # self.__visit_properties_body = True
@@ -1073,10 +1110,10 @@ forall (xa_tx: int;)
             if ctx.v.text == 'msg.value' or ctx.v.text == 'value':
                 return 'xn'
             if ctx.v.text == 'msg.sender' or ctx.v.text == 'sender':
-                return 'xa1'
+                return 'xa'
             if ctx.v.text in self.__args_map:
                 if self.__args_map[ctx.v.text][1] == 'hash':
-                    return 'xa1'
+                    return 'xa'
                 else:
                     return self.__args_map[ctx.v.text][0]
             if ctx.v.text in self.__globals_index:
@@ -1114,15 +1151,21 @@ forall (xa_tx: int;)
                 return 'block_num' + i
             if 'tx.msg.value' in name:
                 return 'xn'+f'_q{self.__n_transactions-1-(self.__n_transactions-self.__pi)}'
-            if 'tx.msg.sender' in name:
-                return 'tx_sender'
+            # if 'tx.msg.sender' in name:
+            #     return 'tx_sender'
+            if ctx.v.text == 'msg.sender' or ctx.v.text == 'sender':
+                return 'xa_tx'
             if name.replace('st.','') in self.__args_map:
                 if self.__args_map[name][1] == 'hash':
                     return 'xa_tx'
                 else:
                     return self.__args_map[name][0] + '_tx' 
             if name.replace('st.','') in self.__globals_index:              
-                return name.replace('st.','') + i
+                # return name.replace('st.','') + i
+                if self.__globals_index[name.replace('st.','')]+self.__globals_modifier < 0:
+                    return name.replace('st.','')
+                else:
+                    return name.replace('st.', '') + '_' + str(self.__globals_index[name.replace('st.','')]+self.__globals_modifier) + '_nx'
             if name == 'sender':
                 return name + '_tx'
             return name.replace('st.', '')

@@ -1,0 +1,183 @@
+
+type functions = enum { dummy, pay_func,receive_func };
+node blacklist (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var w: int;
+var w_0: int;
+var aw_1: int;
+var aw_2: int;
+var aw_1_0: int;
+var aw_2_0: int;
+let
+    if f = receive_func then
+	if ((xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn))) then 
+w_0 = (starting_w -> pre w) + xn;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) - xn;
+fi
+
+
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0; 
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+	elsif f = pay_func then
+	if (pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (xa = 1 or xa = 2) and xn=0 and (pay_func_amount<=(starting_w -> pre w) and not(xa=1))) then 
+
+
+w_0 = (starting_w -> pre w) - pay_func_amount;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) + pay_func_amount;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) + pay_func_amount;
+fi
+
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0; 
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+        if f_tx = receive_func then
+	if ((xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx))) then 
+w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+
+and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (pay_func_amount_tx<=w and not(xa_tx=1))) then 
+
+ w_0_nx = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + pay_func_amount_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + pay_func_amount_tx
+and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2
+
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+        if f_tx = receive_func then
+	if ((xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx))) then 
+w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+
+and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (pay_func_amount_tx<=w and not(xa_tx=1))) then 
+
+ w_0_nx = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + pay_func_amount_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + pay_func_amount_tx
+and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2
+
+        )
+    );
+
+tel
+        
