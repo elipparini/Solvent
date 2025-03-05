@@ -16,6 +16,8 @@ type functions = enum { dummy, receive, pay};
     if f = receive then
         if ((xa = 1 or xa = 2) /* require user is legit */
                 and
+                xn >= 0
+                and
                 (   /* implicit require msg.sender has enough funds to send 'xn' (because of payable) */
                     ( not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn )
                     and
@@ -40,6 +42,7 @@ type functions = enum { dummy, receive, pay};
                 and (xa = 1 or xa = 2)  /* require user is legit */
                 and (xn = 0)    /* not payable */
                 and amount <= (starting_w -> pre w) /* implicit require amount <= balance  (because of transfer) */
+                and amount >= 0
                 ) then        
             w = (starting_w -> pre w) - amount;
             if (xa = 1) then
@@ -81,6 +84,7 @@ type functions = enum { dummy, receive, pay};
             if f_tx = receive then
                 if ((xa_tx = 1 or xa_tx = 2) /* require user is legit */
                         and
+                        (xn_tx >= 0) and
                         (   /* implicit require msg.sender has enough funds to send 'amount' (because of payable) */
                             ( not(xa_tx = 1) or aw_1 >= xn_tx )
                             and
@@ -104,9 +108,11 @@ type functions = enum { dummy, receive, pay};
                         and
                     aw_2_nx = aw_2
             else if f_tx = pay then
-                if not(xa_tx = 1)  
+                if not(xa_tx = 1) and
+                        (xn_tx = 0) 
                         and (xa_tx = 1 or xa_tx = 2)
                         and amount_tx <= w 
+                        and amount_tx >= 0
                         then        
                     w_nx = w - amount_tx
                         and
@@ -134,7 +140,7 @@ type functions = enum { dummy, receive, pay};
         );
         
     --%PROPERTY /* liquidity2_liquid */
-    forall (xa_tx: int;)
+    forall (xa_tx: int; xn_tx: int;)
         (
             not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
                 or
@@ -142,7 +148,7 @@ type functions = enum { dummy, receive, pay};
         )
             or
     exists (
-            amount_tx: int; f_tx: functions;  /* Transition vars */
+            xn_tx: int; amount_tx: int; f_tx: functions;  /* Transition vars */
             w_nx: int; aw_1_nx: int; aw_2_nx: int; /* Next state vars */
             ) 
         (
@@ -156,22 +162,24 @@ type functions = enum { dummy, receive, pay};
             if f_tx = receive then
                 if ((xa_tx = 1 or xa_tx = 2) /* require user is legit */
                         and
+                        (xn_tx >= 0)
+                        and
                         (   /* implicit require msg.sender has enough funds to send 'amount' (because of payable) */
-                            ( not(xa_tx = 1) or aw_1 >= amount_tx )
+                            ( not(xa_tx = 1) or aw_1 >= xn_tx )
                             and
-                            ( not(xa_tx = 2) or aw_2 >= amount_tx )
+                            ( not(xa_tx = 2) or aw_2 >= xn_tx )
                         )
                         ) then  
-                    w_nx = w + amount_tx 
+                    w_nx = w + xn_tx 
                         and
                     if (xa_tx = 1) then
-                        aw_1_nx = aw_1 - amount_tx
+                        aw_1_nx = aw_1 - xn_tx
                             and
                         aw_2_nx = aw_2
                     else
                         aw_1_nx = aw_1
                             and
-                        aw_2_nx = aw_2 - amount_tx
+                        aw_2_nx = aw_2 - xn_tx
                 else
                     w_nx = w
                         and
@@ -182,6 +190,8 @@ type functions = enum { dummy, receive, pay};
                 if not(xa_tx = 1)  
                         and (xa_tx = 1 or xa_tx = 2)
                         and amount_tx <= w 
+                        and amount_tx >= 0
+                        and xn_tx = 0
                         then        
                     w_nx = w - amount_tx
                         and
