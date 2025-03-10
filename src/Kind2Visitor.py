@@ -87,7 +87,7 @@ class Kind2Visitor(TxScriptVisitor):
             contract_args + 
             ['starting_w: int', 'starting_aw_1: int', 'starting_aw_2: int']) 
         contract_assumptions = '\n'.join([f'assume starting_aw_{ag} >= 0;' for ag in range(1, self.__A+1)])
-        contract_globals = []
+        contract_globals = ['var contract_not_constructed: bool;']
         for (g_var,g_type) in self.__globals:
             if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                 g_type = 'int'
@@ -146,8 +146,10 @@ class Kind2Visitor(TxScriptVisitor):
             #     keys.remove('coinbase')
             #     aux += 1
             # functions_call += 'And(xa1 >= 1, xa1 <= A, '
+            if not self.__visit_properties:
+                body = 'if (true -> pre contract_not_constructed) then\n' + self.__functions['constructor'] + '\n' 
             for p in keys[:-1]:
-                if p == keys[0]:
+                if self.__visit_properties and p == keys[0]:
                     cmd = 'if'
                 else:
                     cmd = 'elsif'
@@ -177,7 +179,7 @@ let
     {body}
     {all_props}
 tel
-        '''.replace('skip and', '').replace('skip', '')
+        '''.replace('skip and', '').replace('skip', '').replace(';;', ';')
         
         return res 
 
@@ -292,35 +294,72 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#nonPayableConstructorDecl.
     def visitNonPayableConstructorDecl(self, ctx:TxScriptParser.NonPayableConstructorDeclContext):
-        # constructor needs to be updated to gather the values to be put in starting_*
         self.__nesting_w = 0
         self.__nesting_aw = 0
-        self.__t_curr_w = 'wNow'
-        self.__t_new_w = 't_w[0]'
-        self.__t_curr_a = 'awNow'
-        self.__t_new_a = 't_aw[0]'
+        if self.__visit_properties:
+            self.__t_curr_w = 'w'
+            self.__t_new_w = 'w_0_nx'
+            self.__t_curr_a = [f'aw_{i}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0_nx' for i in range(self.__A+1)]
+        else:
+            self.__t_curr_w = '(starting_w -> pre w)'
+            self.__t_new_w = 'w_0'
+            self.__t_curr_a = [f'(starting_aw_{i} -> pre aw_{i})' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0' for i in range(self.__A+1)]
         self.__proc.add('constructor')
         self.__prefix = 'constructor'
         for k in self.__globals_index:
             self.__globals_index[k] = 0
         self.__requires = set()
-        return self.visitFun(ctx, 'And(xn == 0')
+        if not self.__visit_properties: 
+            self.__requires.add('xn=0')
+            self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
+        else:
+            self.__requires.add('xn_tx=0')
+            self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
+        return self.visitFun(ctx, '')
     
 
     # Visit a parse tree produced by TxScriptParser#payableConstructorDecl.
     def visitPayableConstructorDecl(self, ctx:TxScriptParser.PayableConstructorDeclContext):
+        self.__payable = True
         self.__nesting_w = 1
-        self.__nesting_aw = 0
-        self.__t_curr_w = 't_w[0]'
-        self.__t_new_w = 't_w[1]'
-        self.__t_curr_a = 'awNow'
-        self.__t_new_a = 't_aw[0]'
+        self.__nesting_aw = 1
+        if self.__visit_properties:
+            self.__t_curr_w = 'w'
+            self.__t_new_w = 'w_0_nx'
+            self.__t_curr_a = [f'aw_{i}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0_nx' for i in range(self.__A+1)]
+        else:
+            self.__t_curr_w = '(starting_w -> pre w)'
+            self.__t_new_w = 'w_0'
+            self.__t_curr_a = [f'(starting_aw_{i} -> pre aw_{i})' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_0' for i in range(self.__A+1)]
         self.__proc.add('constructor')
         self.__prefix = 'constructor'
         for k in self.__globals_index:
             self.__globals_index[k] = 0
         self.__requires = set()
-        return self.visitFun(ctx, 'And(t_w[0] == wNow + xn')
+        if not self.__visit_properties: 
+            self.__requires.add('xn >= 0')
+            self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
+            self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = self.send('xa', 'xn', negative=True)
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
+            self.__t_new_w = 'w_' + str(self.__nesting_w)
+        else:
+            self.__requires.add('xn_tx >= 0')
+            self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
+            self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = '(' + self.send('xa_tx', 'xn_tx', negative=True) + ')'
+            self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
+            self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
+            self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
+            self.__t_new_w = 'w_' + str(self.__nesting_w) + '_nx'
+        self.__M += 1        
+        return self.visitFun(ctx, add_to_body)
 
 
     # Visit a parse tree produced by TxScriptParser#payableFunDecl.
@@ -414,21 +453,14 @@ tel
                     else:
                         self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
         self.__proc_args[self.__prefix] = args
-#         res ='''
-# def {name}(xa1, xn, {args}awNow, awNext, wNow, wNext, t_aw, t_w, block_num{global_args}, err):
-#     return {reqs}, \n\tAnd({body}'''.format(
-#         name=self.__prefix, 
-#         args=(','.join(args)+', ' if args else ''), 
-#         body=body, 
-#         reqs=reqs,
-#         global_args = (', ' + ', '.join([g.text+'Now, '+g.text+'Next, t_'+g.text for (g, _) in self.__globals])) if self.__globals else '',
-#     ) 
         if not self.__visit_properties:
             skip = f'\n\tw = {self.__t_curr_w};'
             skip += '\n\t' + '\n\t'.join([f'aw_{i} = {self.__t_curr_a[i]};' for i in range(1, self.__A+1)])
             skip += '\n\t' + '\n\t'.join([g.text + ' = ' + (f'(starting_{g.text} -> pre {g.text});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for (g, _) in self.__globals]) if self.__globals else ''        
+            skip += '\n\t' + ('contract_not_constructed = false;' if self.__prefix == 'constructor' else 'contract_not_constructed = (true -> pre contract_not_constructed);')
             body += skip
-            same = f'\n\tw = (starting_w -> pre w);'
+            same = '\n\tcontract_not_constructed = true;' if self.__prefix == 'constructor' else '\n\tcontract_not_constructed = (true -> pre contract_not_constructed);'
+            same += f'\n\tw = (starting_w -> pre w);'
             same += '\n\t' + '\n\t'.join([f'aw_{i} = (starting_aw_{i} -> pre aw_{i});' for i in range(1, self.__A+1)])
             same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, _) in self.__globals]) if self.__globals else ''
         else:
@@ -590,13 +622,11 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#requireCmd.
     def visitRequireCmd(self, ctx:TxScriptParser.RequireCmdContext):
-        if self.__prefix == 'constructor':
-            return self.visit(ctx.child)
-        else:
-            # return 'If(\n\tNot(' + self.visit(ctx.child) + '), \n\t\tnext_state_tx(awNow, awNext, wNow, wNext'+((', ' + ', '.join([g.text+'Now, '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else '')+'), And(\n\t\t{subs}))'
-            # return f'Or(err==True, err==({self.visit(ctx.child)})'
-            self.__requires.add(f'{self.visit(ctx.child)}')
-            return 'skip'
+        # if self.__prefix == 'constructor':
+        #     return self.visit(ctx.child) + ';'
+        # else:
+        self.__requires.add(f'{self.visit(ctx.child)}')
+        return 'skip'
 
     # Visit a parse tree produced by TxScriptParser#skipCmd.
     def visitSkipCmd(self, ctx:TxScriptParser.SkipCmdContext):
@@ -638,7 +668,7 @@ tel
         i = self.__globals_index[left]
         self.__globals_index[left] = i+1
         if self.__prefix == 'constructor':
-            self.__initial_const_globals[left] = right
+            self.__initial_const_globals[left] = 0
         aux = 0
         while '[' in right[aux:] and ']' in right[aux:] and right[right.index('[', aux)+1:right.index(']', aux)].isnumeric():
             aux = right.index(']', aux) + 1
@@ -744,10 +774,14 @@ tel
         #     t_curr_w=self.__t_curr_w, 
         #     global_args_next_state_tx = (', ' + ', '.join([(g.text + 'Now' if self.__globals_index[g.text]+self.__globals_modifier < 0 else 't_'+g.text + '['+str(self.__globals_index[g.text]-1+self.__globals_modifier)+']')+', '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else ''
         # )
-        levelling_if_cmds = 'true'
-        levelling_else_cmds = 'true'
+        levelling_if_cmds = ''
+        levelling_else_cmds = ''
         if if_nesting_w > self.__nesting_w:
-            levelling_else_cmds += f', {if__t_curr_w}=={self.__t_curr_w}, And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_else_cmds += f'{self.__t_curr_w}={if__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            for ag1 in range(1, self.__A+1):
+                levelling_else_cmds += f'{self.__t_curr_a[ag1]} = {if__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
+            if self.__visit_properties:
+                levelling_else_cmds = levelling_else_cmds[:-5]
             self.__t_curr_a = if__t_curr_a
             self.__t_new_a = if__t_new_a
             self.__t_curr_w = if__t_curr_w
@@ -755,7 +789,11 @@ tel
             self.__nesting_w = if_nesting_w
             self.__nesting_aw = if_nesting_aw
         elif if_nesting_w < self.__nesting_w:
-            levelling_if_cmds += f', {if__t_curr_w}=={self.__t_curr_w}, And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_if_cmds += f'{self.__t_curr_w} = {if__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            for ag1 in range(1, self.__A+1):
+                levelling_if_cmds += f'{self.__t_curr_a[ag1]} = {if__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
+            if self.__visit_properties:
+                levelling_if_cmds = levelling_if_cmds[:-5]
         for g in self.__globals_index:
             for (gg,gt) in self.__globals:
                 if gg.text == g:
@@ -781,20 +819,20 @@ tel
         self.__add_last_cmd = backup_add
         # self.__globals_index = backup
         ifcmd_aux = ifcmd.format(subs=levelling_if_cmds)
-        if ifcmd_aux == ifcmd:
-            ifcmd += f', {levelling_if_cmds}'
+        if ifcmd_aux == ifcmd and levelling_if_cmds:
+            ifcmd += (' and' if self.__visit_properties else '') + f' {levelling_if_cmds}'
         else:
             ifcmd = ifcmd_aux
         elsecmd_aux = elsecmd.format(subs=levelling_else_cmds)
-        if elsecmd_aux == elsecmd:
-            elsecmd += f', {levelling_else_cmds}'
+        if elsecmd_aux == elsecmd and levelling_else_cmds:
+            elsecmd += (' and' if self.__visit_properties else '') + f' {levelling_else_cmds}'
         else:
             elsecmd = elsecmd_aux
 
         if self.__visit_properties:
             return f'(if {cond} then {ifcmd} else {elsecmd})'
         else:
-            return f'(if ({cond}) then {ifcmd} else {elsecmd} fi)'
+            return f'if ({cond}) then {ifcmd} else {elsecmd} fi'
 
 
     # Visit a parse tree produced by TxScriptParser#seqCmd.
@@ -998,7 +1036,8 @@ tel
     def visitQslf(self, ctx:TxScriptParser.QslfContext):
         user_is_legit = ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)])
         transition_vars = 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
-        if self.__payable: transition_vars += ' xn_tx: int;'
+        # if self.__payable: 
+        transition_vars += ' xn_tx: int;'
         contract_globals = []
         contract_globals += ['w_nx: int;']
         contract_globals += [f'w_{i}_nx: int;' for i in range(self.__M + 1)]
@@ -1038,7 +1077,7 @@ tel
             contract += f'{same}\n'
         pi = f'''--%PROPERTY 
 forall (xa_tx: int;)
-    (not ({user_is_legit}) or {implication}) /* user is legit*/
+    (not ({user_is_legit}) or {implication} or (contract_not_constructed)) /* user is legit*/
     or
     exists (
             {transition_vars}  /* Transition vars */

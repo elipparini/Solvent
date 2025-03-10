@@ -1,7 +1,7 @@
 contract Inductive {
   int a; 
   int b; 
-  constructor () {
+  constructor() {
     a = 0;
     b = 0;
     skip

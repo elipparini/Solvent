@@ -6,6 +6,7 @@ node inductive (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;st
     assume starting_aw_1 >= 0;
 assume starting_aw_2 >= 0;
 *)
+var contract_not_constructed: bool;
 const starting_a : int = 0;
 const starting_b : int = 0;
 var w: int;
@@ -19,8 +20,29 @@ var a_0 : int;
 var b : int;
 var b_0 : int;
 let
-    if f = pay_func then
-	if (xn=0 and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (starting_a -> pre a) = (starting_b -> pre b) and (xa = 1 or xa = 2)) then 
+    if (true -> pre contract_not_constructed) then
+if (xn=0 and (xa = 1 or xa = 2)) then 
+
+a_0 = 0;
+b_0 = 0;
+
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	a = a_0;
+	b = b_0;
+	contract_not_constructed = false; 
+else 
+	contract_not_constructed = true;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	a = (starting_a -> pre a);
+	b = (starting_b -> pre b);
+fi
+elsif f = pay_func then
+	if (xn=0 and (starting_a -> pre a) = (starting_b -> pre b) and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (xa = 1 or xa = 2)) then 
+
 
 w_0 = (starting_w -> pre w) - pay_func_amount;
 if (xa = 1) then
@@ -37,8 +59,10 @@ b_0 = ((starting_b -> pre b)+1);
 	aw_1 = aw_1_0;
 	aw_2 = aw_2_0;
 	a = a_0;
-	b = b_0; 
+	b = b_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
@@ -54,10 +78,10 @@ else
 fi
     --%PROPERTY 
 forall (xa_tx: int;)
-    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    (not (xa_tx = 1 or xa_tx = 2) or not(true) or (contract_not_constructed)) /* user is legit*/
     or
     exists (
-            f_tx: functions; pay_func_amount_tx: int;  /* Transition vars */
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
             w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; a_nx : int; a_0_nx : int; b_nx : int; b_0_nx : int; /* Next state vars */
     )
     (
@@ -67,15 +91,16 @@ forall (xa_tx: int;)
         and
         (
         if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and a = b and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
- w_0_nx = w - pay_func_amount_tx and
+	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0 and a = b) then 
+
+ (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
 else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 + pay_func_amount_tx
- and a_0_nx = (a+1) and b_0_nx = (b+1)and 
+) and a_0_nx = (a+1) and b_0_nx = (b+1)and 
 	w_nx = w_0_nx and 
 	aw_1_nx = aw_1_0_nx
 	 and aw_2_nx = aw_2_0_nx and 

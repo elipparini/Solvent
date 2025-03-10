@@ -6,6 +6,7 @@ node blacklist (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;st
     assume starting_aw_1 >= 0;
 assume starting_aw_2 >= 0;
 *)
+var contract_not_constructed: bool;
 var w: int;
 var w_0: int;
 var aw_1: int;
@@ -13,8 +14,22 @@ var aw_2: int;
 var aw_1_0: int;
 var aw_2_0: int;
 let
-    if f = receive_func then
-	if (xn >= 0 and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)) and (xa = 1 or xa = 2)) then 
+    if (true -> pre contract_not_constructed) then
+if (xn=0 and (xa = 1 or xa = 2)) then 
+
+
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	contract_not_constructed = false; 
+else 
+	contract_not_constructed = true;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+elsif f = receive_func then
+	if (((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)) and xn >= 0 and (xa = 1 or xa = 2)) then 
 w_0 = (starting_w -> pre w) + xn;
 if (xa = 1) then
 	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
@@ -27,8 +42,10 @@ fi
 
 	w = w_0;
 	aw_1 = aw_1_0;
-	aw_2 = aw_2_0; 
+	aw_2 = aw_2_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
@@ -48,8 +65,10 @@ fi
 
 	w = w_0;
 	aw_1 = aw_1_0;
-	aw_2 = aw_2_0; 
+	aw_2 = aw_2_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
@@ -61,7 +80,7 @@ else
 fi
     --%PROPERTY 
 forall (xa_tx: int;)
-    (not (xa_tx = 1 or xa_tx = 2) or not(true)) /* user is legit*/
+    (not (xa_tx = 1 or xa_tx = 2) or not(true) or (contract_not_constructed)) /* user is legit*/
     or
     exists (
             f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
@@ -74,7 +93,7 @@ forall (xa_tx: int;)
         and
         (
         if f_tx = receive_func then
-	if (((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and (xa_tx = 1 or xa_tx = 2) and xn_tx >= 0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and xn_tx >= 0) then 
 (w_0_nx = w + xn_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 - xn_tx and
@@ -93,7 +112,7 @@ else
 	 and aw_2_nx = aw_2
 
 	else if f_tx = pay_func then
-	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (pay_func_amount_tx<=w and not(xa_tx=1)) and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and xn_tx=0 and (pay_func_amount_tx<=w and not(xa_tx=1)) and (xa_tx = 1 or xa_tx = 2)) then 
 
  (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
@@ -121,7 +140,7 @@ else
 
 --%PROPERTY 
 forall (xa_tx: int;)
-    (not (xa_tx = 1 or xa_tx = 2) or not(not(xa_tx=1))) /* user is legit*/
+    (not (xa_tx = 1 or xa_tx = 2) or not(not(xa_tx=1)) or (contract_not_constructed)) /* user is legit*/
     or
     exists (
             f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
@@ -134,7 +153,7 @@ forall (xa_tx: int;)
         and
         (
         if f_tx = receive_func then
-	if (((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and (xa_tx = 1 or xa_tx = 2) and xn_tx >= 0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and xn_tx >= 0) then 
 (w_0_nx = w + xn_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 - xn_tx and
@@ -153,7 +172,7 @@ else
 	 and aw_2_nx = aw_2
 
 	else if f_tx = pay_func then
-	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (pay_func_amount_tx<=w and not(xa_tx=1)) and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and xn_tx=0 and (pay_func_amount_tx<=w and not(xa_tx=1)) and (xa_tx = 1 or xa_tx = 2)) then 
 
  (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
