@@ -24,7 +24,7 @@ var count : int;
 var count_0 : int;
 let
     if (true -> pre contract_not_constructed) then
-if (xn >= 0 and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)) and (xa = 1 or xa = 2) and xn>0) then 
+if (xn>0 and xn >= 0 and (xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn))) then 
 w_0 = (starting_w -> pre w) + xn;
 if (xa = 1) then
 	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
@@ -55,7 +55,7 @@ else
 	count = (starting_count -> pre count);
 fi
 elsif f = pay_func then
-	if ((starting_count -> pre count)<(starting_maxCount -> pre maxCount) and (starting_w -> pre w) >= 0 and (starting_w -> pre w) <= (starting_w -> pre w) and (xa = 1 or xa = 2) and xn=0) then 
+	if (xn=0 and (xa = 1 or xa = 2) and (starting_count -> pre count)<(starting_maxCount -> pre maxCount) and (starting_w -> pre w) >= 0 and (starting_w -> pre w) <= (starting_w -> pre w)) then 
 
 
 if (xa = (starting_owner -> pre owner)) then count_0 = ((starting_count -> pre count)+1); w_0 = (starting_w -> pre w);aw_1_0 = (starting_aw_1 -> pre aw_1);aw_2_0 = (starting_aw_2 -> pre aw_2); else count_0 = (starting_count -> pre count);
@@ -106,8 +106,8 @@ forall (xa_tx: int;)
         )
         and
         (
-        if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and count<maxCount and w >= 0 and w <= w and xn_tx=0) then 
+        (if f_tx = pay_func then
+	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -138,26 +138,26 @@ else
 	owner_nx = owner
 	and maxCount_nx = maxCount
 	and count_nx = count
-
+)
         )
     );
 
 --%PROPERTY 
 forall (xa_tx: int;)
-    (not (xa_tx = 1 or xa_tx = 2) or not((w>0 and count_0_nx<maxCount)) or (contract_not_constructed)) /* user is legit*/
+    (not (xa_tx = 1 or xa_tx = 2) or not((w>0 and count<maxCount)) or (contract_not_constructed)) /* user is legit*/
     or
     exists (
-            f_tx: functions;  xn_tx: int;  /* Transition vars */
-            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; owner_nx : int; owner_0_nx : int; maxCount_nx : int; maxCount_0_nx : int; count_nx : int; count_0_nx : int; /* Next state vars */
+            f_tx: functions;  xn_tx: int;f_tx2: functions;  xn_tx2: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; owner_nx : int; owner_0_nx : int; maxCount_nx : int; maxCount_0_nx : int; count_nx : int; count_0_nx : int; w_nx2: int; w_0_nx2: int; aw_1_nx2: int; aw_2_nx2: int; aw_1_0_nx2: int; aw_2_0_nx2: int; owner_nx2 : int; owner_0_nx2 : int; maxCount_nx2 : int; maxCount_0_nx2 : int; count_nx2 : int; count_0_nx2 : int; /* Next state vars */
     )
     (
         (   /* condition */
-            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+            (not(xa_tx = 1) or aw_1_nx2 = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx2 = (aw_2+w))
         )
         and
         (
-        if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and count<maxCount and w >= 0 and w <= w and xn_tx=0) then 
+        (if f_tx = pay_func then
+	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -188,7 +188,39 @@ else
 	owner_nx = owner
 	and maxCount_nx = maxCount
 	and count_nx = count
+) and (if f_tx = pay_func then
+	if (count_nx<maxCount_nx and w_nx >= 0 and w_nx <= w_nx and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
 
+ (if xa_tx = owner_nx then count_0_nx2 = (count_nx+1) and w_0_nx2 = w_nx and aw_1_0_nx2 = aw_1_nx and aw_2_0_nx2 = aw_2_nx else count_0_nx2 = count_nx and (w_0_nx2 = w_nx - w_nx and
+if (xa_tx = 1) then
+	aw_1_0_nx2 = aw_1_nx + w_nx and
+	aw_2_0_nx2 = aw_2_nx
+else
+	aw_1_0_nx2 = aw_1_nx and
+	aw_2_0_nx2 = aw_2_nx + w
+))and 
+	w_nx2 = w_0_nx2 and 
+	aw_1_nx2 = aw_1_0_nx2
+	 and aw_2_nx2 = aw_2_0_nx2 and 
+	owner_nx2 = owner_nx
+	 and maxCount_nx2 = maxCount_nx
+	 and count_nx2 = count_0 
+else 
+	w_nx2 = w_nx and 
+	aw_1_nx2 = aw_1_nx
+	 and aw_2_nx2 = aw_2_nx and 
+	owner_nx2 = owner_nx
+	 and maxCount_nx2 = maxCount_nx
+	 and count_nx2 = count_nx
+
+else
+	w_nx2 = w_nx  and 
+	aw_1_nx2 = aw_1_nx
+	and aw_2_nx2 = aw_2_nx and 
+	owner_nx2 = owner_nx
+	and maxCount_nx2 = maxCount_nx
+	and count_nx2 = count_nx
+)
         )
     );
 
@@ -197,17 +229,17 @@ forall (xa_tx: int;)
     (not (xa_tx = 1 or xa_tx = 2) or not((w>0 and not(owner=xa_tx))) or (contract_not_constructed)) /* user is legit*/
     or
     exists (
-            f_tx: functions;  xn_tx: int;  /* Transition vars */
-            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; owner_nx : int; owner_0_nx : int; maxCount_nx : int; maxCount_0_nx : int; count_nx : int; count_0_nx : int; /* Next state vars */
+            f_tx: functions;  xn_tx: int;f_tx2: functions;  xn_tx2: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; owner_nx : int; owner_0_nx : int; maxCount_nx : int; maxCount_0_nx : int; count_nx : int; count_0_nx : int; w_nx2: int; w_0_nx2: int; aw_1_nx2: int; aw_2_nx2: int; aw_1_0_nx2: int; aw_2_0_nx2: int; owner_nx2 : int; owner_0_nx2 : int; maxCount_nx2 : int; maxCount_0_nx2 : int; count_nx2 : int; count_0_nx2 : int; /* Next state vars */
     )
     (
         (   /* condition */
-            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+            (not(xa_tx = 1) or aw_1_nx2 = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx2 = (aw_2+w))
         )
         and
         (
-        if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and count<maxCount and w >= 0 and w <= w and xn_tx=0) then 
+        (if f_tx = pay_func then
+	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -238,7 +270,39 @@ else
 	owner_nx = owner
 	and maxCount_nx = maxCount
 	and count_nx = count
+) and (if f_tx = pay_func then
+	if (count_nx<maxCount_nx and w_nx >= 0 and w_nx <= w_nx and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
 
+ (if xa_tx = owner_nx then count_0_nx2 = (count_nx+1) and w_0_nx2 = w_nx and aw_1_0_nx2 = aw_1_nx and aw_2_0_nx2 = aw_2_nx else count_0_nx2 = count_nx and (w_0_nx2 = w_nx - w_nx and
+if (xa_tx = 1) then
+	aw_1_0_nx2 = aw_1_nx + w_nx and
+	aw_2_0_nx2 = aw_2_nx
+else
+	aw_1_0_nx2 = aw_1_nx and
+	aw_2_0_nx2 = aw_2_nx + w
+))and 
+	w_nx2 = w_0_nx2 and 
+	aw_1_nx2 = aw_1_0_nx2
+	 and aw_2_nx2 = aw_2_0_nx2 and 
+	owner_nx2 = owner_nx
+	 and maxCount_nx2 = maxCount_nx
+	 and count_nx2 = count_0 
+else 
+	w_nx2 = w_nx and 
+	aw_1_nx2 = aw_1_nx
+	 and aw_2_nx2 = aw_2_nx and 
+	owner_nx2 = owner_nx
+	 and maxCount_nx2 = maxCount_nx
+	 and count_nx2 = count_nx
+
+else
+	w_nx2 = w_nx  and 
+	aw_1_nx2 = aw_1_nx
+	and aw_2_nx2 = aw_2_nx and 
+	owner_nx2 = owner_nx
+	and maxCount_nx2 = maxCount_nx
+	and count_nx2 = count_nx
+)
         )
     );
 

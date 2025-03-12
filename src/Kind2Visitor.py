@@ -3,6 +3,7 @@ from antlr4 import *
 from TxScriptLexer import *
 from TxScriptParser import *
 from TxScriptVisitor import *
+import re
 
 class Kind2Visitor(TxScriptVisitor):
     def __init__(self, N, A, Trace_Based, can_transations_arrive_any_time, fixed_iteration):
@@ -1034,10 +1035,16 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#qslf.
     def visitQslf(self, ctx:TxScriptParser.QslfContext):
+        for k in self.__globals_index:
+            self.__globals_index[k] = 0
         user_is_legit = ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)])
-        transition_vars = 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
-        # if self.__payable: 
+        ntrans = int(ctx.nTrans.text)
+        transition_vars = ''
+        transition_vars += 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
         transition_vars += ' xn_tx: int;'
+        for i in range(2, ntrans+1):
+            transition_vars += f'f_tx{i}: functions; ' + ' '.join(['{a}_tx{i}: {t};'.format(i=i, a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
+            transition_vars += f' xn_tx{i}: int;'
         contract_globals = []
         contract_globals += ['w_nx: int;']
         contract_globals += [f'w_{i}_nx: int;' for i in range(self.__M + 1)]
@@ -1048,11 +1055,25 @@ tel
                 g_type = 'int'
             contract_globals += [f'{g_var.text}_nx : {g_type};']
             contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__M + 1)]  # double check when we start reusing maps!
+        for j in range(2, ntrans+1):
+            contract_globals += [f'w_nx{j}: int;']
+            contract_globals += [f'w_{i}_nx{j}: int;' for i in range(self.__M + 1)]
+            contract_globals += [f'aw_{ag}_nx{j}: int;' for ag in range(1, self.__A+1)]
+            contract_globals += [f'aw_{ag}_{i}_nx{j}: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
+            for (g_var,g_type) in self.__globals:
+                if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
+                    g_type = 'int'
+                contract_globals += [f'{g_var.text}_nx{j} : {g_type};']
+                contract_globals += [f'{g_var.text}_{i}_nx{j} : {g_type};' for i in range(self.__M + 1)]  # double check when we start reusing maps!
+            
         next_state_vars = ' '.join(contract_globals)
-        implication = 'not(' + self.visit(ctx.where) + ')' 
+        implication = 'not(' + self.visit(ctx.where) + ')'
+        implication = implication.replace('_nx', '')
         # self.__visit_properties_body = True
         body = self.visit(ctx.body)
         # self.__visit_properties_body = False
+        if ntrans >= 2:
+            body = body.replace('_nx', '_nx2')
         condition = ' and '.join([f'(not(xa_tx = {ag}) or ' + body.format(ag = ag) + ')' for ag in range(1, self.__A+1)])
         self.visit(self.__ctx)
         contract = ''
@@ -1075,6 +1096,28 @@ tel
             same += ' and \n\t' + '\n\tand '.join([f'aw_{i}_nx = aw_{i}' for i in range(1, self.__A+1)])
             same += ' and \n\t' + '\n\tand '.join([g.text + '_nx = ' + f'{g.text}' for (g, _) in self.__globals]) if self.__globals else ''
             contract += f'{same}\n'
+        contracts = [contract]
+        nx = '_nx'
+        nx1 = '_nx2'
+        for i in range(2, ntrans+1):
+            aux = contract
+            aux = aux.replace('_nx', nx1)
+            pattern = re.escape(' w ') + r'(?!_)'
+            aux = re.sub(pattern, f' w{nx} ', aux)
+            pattern = re.escape(' w)') + r'(?!_)'
+            aux = re.sub(pattern, f' w{nx})', aux)
+            pattern = re.escape('(w ') + r'(?!_)'
+            aux = re.sub(pattern, f'(w{nx} ', aux)
+            for k in self.__globals_index:
+                pattern = re.escape(k) + r'(?!_)'
+                aux = re.sub(pattern, f'{k}{nx}', aux)
+            for j in range(1, self.__A+1):
+                pattern = re.escape(f'aw_{j}') + r'(?!_)'
+                aux = re.sub(pattern, f'aw_{j}{nx}', aux)
+            contracts.append(aux)
+            nx = f'_nx{i}'
+            nx1 = f'_nx{i+1}'
+        contracts = ' and '.join(f'({c})' for c in contracts)
         pi = f'''--%PROPERTY 
 forall (xa_tx: int;)
     (not ({user_is_legit}) or {implication} or (contract_not_constructed)) /* user is legit*/
@@ -1089,7 +1132,7 @@ forall (xa_tx: int;)
         )
         and
         (
-        {contract}
+        {contracts}
         )
     );
 '''
