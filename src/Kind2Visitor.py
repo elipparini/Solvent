@@ -1102,12 +1102,18 @@ tel
         for i in range(2, ntrans+1):
             aux = contract
             aux = aux.replace('_nx', nx1)
-            pattern = re.escape(' w ') + r'(?!_)'
-            aux = re.sub(pattern, f' w{nx} ', aux)
-            pattern = re.escape(' w)') + r'(?!_)'
-            aux = re.sub(pattern, f' w{nx})', aux)
-            pattern = re.escape('(w ') + r'(?!_)'
-            aux = re.sub(pattern, f'(w{nx} ', aux)
+            # List of (pattern substring, replacement string) pairs
+            substitutions = [
+                ('\nw ', f'\nw{nx} '),
+                (' w\n', f' w{nx}\n'),
+                (' w ', f' w{nx} '),
+                (' w)', f' w{nx})'),
+                ('(w ', f'(w{nx} ')
+            ]
+            # Apply each substitution using a regex with a negative lookahead
+            for substring, replacement in substitutions:
+                pattern = re.escape(substring) + r'(?!_)'
+                aux = re.sub(pattern, replacement, aux)
             for k in self.__globals_index:
                 pattern = re.escape(k) + r'(?!_)'
                 aux = re.sub(pattern, f'{k}{nx}', aux)

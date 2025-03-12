@@ -24,7 +24,7 @@ var count : int;
 var count_0 : int;
 let
     if (true -> pre contract_not_constructed) then
-if (xn>0 and xn >= 0 and (xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn))) then 
+if ((xa = 1 or xa = 2) and xn>0 and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)) and xn >= 0) then 
 w_0 = (starting_w -> pre w) + xn;
 if (xa = 1) then
 	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
@@ -55,7 +55,7 @@ else
 	count = (starting_count -> pre count);
 fi
 elsif f = pay_func then
-	if (xn=0 and (xa = 1 or xa = 2) and (starting_count -> pre count)<(starting_maxCount -> pre maxCount) and (starting_w -> pre w) >= 0 and (starting_w -> pre w) <= (starting_w -> pre w)) then 
+	if ((xa = 1 or xa = 2) and xn=0 and (starting_w -> pre w) >= 0 and (starting_w -> pre w) <= (starting_w -> pre w) and (starting_count -> pre count)<(starting_maxCount -> pre maxCount)) then 
 
 
 if (xa = (starting_owner -> pre owner)) then count_0 = ((starting_count -> pre count)+1); w_0 = (starting_w -> pre w);aw_1_0 = (starting_aw_1 -> pre aw_1);aw_2_0 = (starting_aw_2 -> pre aw_2); else count_0 = (starting_count -> pre count);
@@ -107,7 +107,7 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = pay_func then
-	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (w >= 0 and w <= w and count<maxCount and xn_tx=0 and (xa_tx = 1 or xa_tx = 2)) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -157,7 +157,7 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = pay_func then
-	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (w >= 0 and w <= w and count<maxCount and xn_tx=0 and (xa_tx = 1 or xa_tx = 2)) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -189,7 +189,7 @@ else
 	and maxCount_nx = maxCount
 	and count_nx = count
 ) and (if f_tx = pay_func then
-	if (count_nx<maxCount_nx and w_nx >= 0 and w_nx <= w_nx and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (w_nx >= 0 and w_nx <= w_nx and count_nx<maxCount_nx and xn_tx=0 and (xa_tx = 1 or xa_tx = 2)) then 
 
  (if xa_tx = owner_nx then count_0_nx2 = (count_nx+1) and w_0_nx2 = w_nx and aw_1_0_nx2 = aw_1_nx and aw_2_0_nx2 = aw_2_nx else count_0_nx2 = count_nx and (w_0_nx2 = w_nx - w_nx and
 if (xa_tx = 1) then
@@ -197,7 +197,7 @@ if (xa_tx = 1) then
 	aw_2_0_nx2 = aw_2_nx
 else
 	aw_1_0_nx2 = aw_1_nx and
-	aw_2_0_nx2 = aw_2_nx + w
+	aw_2_0_nx2 = aw_2_nx + w_nx
 ))and 
 	w_nx2 = w_0_nx2 and 
 	aw_1_nx2 = aw_1_0_nx2
@@ -239,7 +239,7 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = pay_func then
-	if (count<maxCount and w >= 0 and w <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (w >= 0 and w <= w and count<maxCount and xn_tx=0 and (xa_tx = 1 or xa_tx = 2)) then 
 
  (if xa_tx = owner then count_0_nx = (count+1) and w_0_nx = w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 else count_0_nx = count and (w_0_nx = w - w and
 if (xa_tx = 1) then
@@ -271,7 +271,7 @@ else
 	and maxCount_nx = maxCount
 	and count_nx = count
 ) and (if f_tx = pay_func then
-	if (count_nx<maxCount_nx and w_nx >= 0 and w_nx <= w_nx and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if (w_nx >= 0 and w_nx <= w_nx and count_nx<maxCount_nx and xn_tx=0 and (xa_tx = 1 or xa_tx = 2)) then 
 
  (if xa_tx = owner_nx then count_0_nx2 = (count_nx+1) and w_0_nx2 = w_nx and aw_1_0_nx2 = aw_1_nx and aw_2_0_nx2 = aw_2_nx else count_0_nx2 = count_nx and (w_0_nx2 = w_nx - w_nx and
 if (xa_tx = 1) then
@@ -279,7 +279,7 @@ if (xa_tx = 1) then
 	aw_2_0_nx2 = aw_2_nx
 else
 	aw_1_0_nx2 = aw_1_nx and
-	aw_2_0_nx2 = aw_2_nx + w
+	aw_2_0_nx2 = aw_2_nx + w_nx
 ))and 
 	w_nx2 = w_0_nx2 and 
 	aw_1_nx2 = aw_1_0_nx2
