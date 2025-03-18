@@ -1,0 +1,300 @@
+
+type functions = enum { dummy, unlock_func,pay_func };
+node c14 (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_b : bool = false;
+var w: int;
+var w_0: int;
+var aw_1: int;
+var aw_2: int;
+var aw_1_0: int;
+var aw_2_0: int;
+var b : bool;
+var b_0 : bool;
+let
+    if (true -> pre contract_not_constructed) then
+if ((xa = 1 or xa = 2) and xn=0) then 
+
+b_0 = false;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = b_0;
+	contract_not_constructed = false; 
+else 
+	contract_not_constructed = true;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = (starting_b -> pre b);
+fi
+elsif f = unlock_func then
+	if ((xa = 1 or xa = 2) and xn=0 and not((starting_b -> pre b))) then 
+
+
+b_0 = true;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = b_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
+else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = (starting_b -> pre b);
+fi
+	elsif f = pay_func then
+	if ((xa = 1 or xa = 2) and xn=0 and (pay_func_amount<=(starting_w -> pre w) and (starting_b -> pre b)) and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w)) then 
+
+
+b_0 = false;
+w_0 = (starting_w -> pre w) - pay_func_amount;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) + pay_func_amount;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) + pay_func_amount;
+fi
+
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	b = b_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
+else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = (starting_b -> pre b);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	b = (starting_b -> pre b);
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(true) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; b_nx : bool; b_0_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+        (if f_tx = unlock_func then
+	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
+
+ b_0_nx = true and 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
+
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + pay_func_amount_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + pay_func_amount_tx
+) and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	b_nx = b
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(b = true) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; b_nx : bool; b_0_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+        (if f_tx = unlock_func then
+	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
+
+ b_0_nx = true and 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
+
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + pay_func_amount_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + pay_func_amount_tx
+) and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	b_nx = b
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(true) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; pay_func_amount_tx: int; xn_tx: int;f_tx2: functions; pay_func_amount_tx2: int; xn_tx2: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; b_nx : bool; b_0_nx : bool; w_nx2: int; w_0_nx2: int; aw_1_nx2: int; aw_2_nx2: int; aw_1_0_nx2: int; aw_2_0_nx2: int; b_nx2 : bool; b_0_nx2 : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx2 = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx2 = (aw_2+w))
+        )
+        and
+        (
+        (if f_tx = unlock_func then
+	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
+
+ b_0_nx = true and 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
+
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + pay_func_amount_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + pay_func_amount_tx
+) and 
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	b_nx = b_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	b_nx = b
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	b_nx = b
+) and (if f_tx = unlock_func then
+	if ((xa_tx = 1 or xa_tx = 2) and not(b_nx) and xn_tx=0) then 
+
+ b_0_nx2 = true and 
+	w_nx2 = w_nx and 
+	aw_1_nx2 = aw_1_nx
+	 and aw_2_nx2 = aw_2_nx and 
+	b_nx2 = b_0 
+else 
+	w_nx2 = w_nx and 
+	aw_1_nx2 = aw_1_nx
+	 and aw_2_nx2 = aw_2_nx and 
+	b_nx2 = b_nx
+
+	else if f_tx = pay_func then
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b_nx) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w_nx) then 
+
+ b_0_nx2 = false and (w_0_nx2 = w_nx - pay_func_amount_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx2 = aw_1_nx + pay_func_amount_tx and
+	aw_2_0_nx2 = aw_2_nx
+else
+	aw_1_0_nx2 = aw_1_nx and
+	aw_2_0_nx2 = aw_2_nx + pay_func_amount_tx
+) and 
+	w_nx2 = w_0_nx2 and 
+	aw_1_nx2 = aw_1_0_nx2
+	 and aw_2_nx2 = aw_2_0_nx2 and 
+	b_nx2 = b_0 
+else 
+	w_nx2 = w_nx and 
+	aw_1_nx2 = aw_1_nx
+	 and aw_2_nx2 = aw_2_nx and 
+	b_nx2 = b_nx
+
+else
+	w_nx2 = w_nx  and 
+	aw_1_nx2 = aw_1_nx
+	and aw_2_nx2 = aw_2_nx and 
+	b_nx2 = b_nx
+)
+        )
+    );
+
+tel
+        

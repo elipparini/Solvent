@@ -19,6 +19,7 @@ class Kind2Visitor(TxScriptVisitor):
         self.__max_nesting = 0
         self.__globals = []
         self.__globals_index = {}
+        self.__globals_index_max = {}
         self.__globals_const = {}
         self.__globals_modifier = -1
         self.__initial_const_globals = {}
@@ -103,7 +104,7 @@ class Kind2Visitor(TxScriptVisitor):
             if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                 g_type = 'int'
             contract_globals += [f'var {g_var.text} : {g_type};']
-            contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__max_nesting + 1)]
+            contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__globals_index_max[g_var.text])]
         contract_globals = '\n'.join(contract_globals)
         
         #commented out because args now are a single variable in the lus input
@@ -199,6 +200,10 @@ tel
             self.__M = -1
             decls.append(self.visit(decl))
             self.__max_nesting = max(self.__M, self.__max_nesting)
+            for k in self.__globals_index:
+                if k not in self.__globals_index_max:
+                    self.__globals_index_max[k] = self.__globals_index[k]
+                self.__globals_index_max[k] = max(self.__globals_index_max[k], self.__globals_index[k])
         return decls
     
 
@@ -252,7 +257,7 @@ tel
         if self.__visit_properties: return
         if ctx.var.text in self.__not_valid_names:
             raise Exception(f'{ctx.var.text} is not a valid name for a field, please choose a different name')
-        self.__globals.append((ctx.var, 'Bool'))
+        self.__globals.append((ctx.var, 'bool'))
         self.__globals_index[ctx.var.text] = 0
         self.__globals_const[ctx.var.text] = True if ctx.const else False #self.__const
 
@@ -442,13 +447,13 @@ tel
         if self.__prefix == 'constructor':
             for (g, ty) in self.__globals:
                 if self.__globals_index[g.text] == 0:
-                    self.__globals_index[g.text] = 1
+                    # self.__globals_index[g.text] = 1
                     if ty == 'int': 
                         self.__initial_const_globals[g.text] = 0
                     elif ty == 'Address' or ty == 'Hash' or ty == 'Secret':
                         self.__initial_const_globals[g.text] = 0# to be updated to modify self.__initial_const_globals[g.text] = ?
-                    elif ty == 'Bool':
-                        self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
+                    elif ty == 'bool':
+                        self.__initial_const_globals[g.text] = 'false' # to be updated to modify self.__initial_const_globals[g.text] = ?
                     elif ty == 'String':
                         self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
                     else:
@@ -465,7 +470,7 @@ tel
             same += '\n\t' + '\n\t'.join([f'aw_{i} = (starting_aw_{i} -> pre aw_{i});' for i in range(1, self.__A+1)])
             same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, _) in self.__globals]) if self.__globals else ''
         else:
-            skip = f'and \n\tw_nx = {self.__t_curr_w}'
+            skip = f' and \n\tw_nx = {self.__t_curr_w}'
             skip += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = {self.__t_curr_a[i]}' for i in range(1, self.__A+1)])
             skip += ' and \n\t' + '\n\t and '.join([g.text + '_nx = ' + (f'{g.text}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier)) for (g, _) in self.__globals]) if self.__globals else ''        
             body += skip
@@ -669,7 +674,11 @@ tel
         i = self.__globals_index[left]
         self.__globals_index[left] = i+1
         if self.__prefix == 'constructor':
-            self.__initial_const_globals[left] = 0
+            for (g, ty) in self.__globals:
+                if ty == 'bool':
+                    self.__initial_const_globals[left] = 'false'
+                else:
+                    self.__initial_const_globals[left] = 0
         aux = 0
         while '[' in right[aux:] and ']' in right[aux:] and right[right.index('[', aux)+1:right.index(']', aux)].isnumeric():
             aux = right.index(']', aux) + 1
@@ -712,9 +721,12 @@ tel
         self.__add_last_cmd = backup_add
         levelling_else_cmds = 'true'
         if self.__nesting_w > backup_nesting_w:
-            levelling_else_cmds += f', {backup__t_curr_w}=={self.__t_curr_w}, And([{backup__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
-            #, awNow=={self.__t_curr_a}'
-
+            levelling_else_cmds += f'{self.__t_curr_w}={backup__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            for ag1 in range(1, self.__A+1):
+                levelling_else_cmds += f'{self.__t_curr_a[ag1]} = {backup__t_curr_w[ag1]}' + (' and ' if self.__visit_properties else ';')
+            if self.__visit_properties:
+                levelling_else_cmds = levelling_else_cmds[:-5]
+            # levelling_else_cmds += f', {backup__t_curr_w}=={self.__t_curr_w}, And([{backup__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
         for g in self.__globals_index:
             for (gg,gt) in self.__globals:
                 if gg.text == g:
@@ -746,8 +758,10 @@ tel
         backup__t_new_w = self.__t_new_w
         backup_nesting_w = self.__nesting_w
         backup_nesting_aw = self.__nesting_aw
+        backup_M = self.__M
         backup_global_index = copy.deepcopy(self.__globals_index)
         ifcmd = self.visit(ctx.ifcmd)
+        if_backup_M = self.__M
         ifcmd = ifcmd.format(subs='true')
         # skip = 'next_state_tx({t_curr_a}, awNext, {t_curr_w}, wNext{global_args_next_state_tx})'.format(
         #     t_curr_a=self.__t_curr_a, 
@@ -768,8 +782,10 @@ tel
         self.__nesting_w = backup_nesting_w
         self.__nesting_aw = backup_nesting_aw
         self.__globals_index = backup_global_index
+        self.__M = backup_M
         elsecmd = self.visit(ctx.elsecmd)
         elsecmd = elsecmd.format(subs='true')
+        self.__M = max(self.__M, if_backup_M)
         # skip = 'next_state_tx({t_curr_a}, awNext, {t_curr_w}, wNext{global_args_next_state_tx})'.format(
         #     t_curr_a=self.__t_curr_a, 
         #     t_curr_w=self.__t_curr_w, 
@@ -778,9 +794,9 @@ tel
         levelling_if_cmds = ''
         levelling_else_cmds = ''
         if if_nesting_w > self.__nesting_w:
-            levelling_else_cmds += f'{self.__t_curr_w}={if__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_else_cmds += f'{if__t_curr_w}={self.__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
             for ag1 in range(1, self.__A+1):
-                levelling_else_cmds += f'{self.__t_curr_a[ag1]} = {if__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
+                levelling_else_cmds += f'{if__t_curr_a[ag1]} = {self.__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
             if self.__visit_properties:
                 levelling_else_cmds = levelling_else_cmds[:-5]
             self.__t_curr_a = if__t_curr_a
@@ -935,7 +951,7 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#notExpr.
     def visitNotExpr(self, ctx:TxScriptParser.NotExprContext):
-        return 'Not('+self.visit(ctx.child)+')'
+        return 'not('+self.visit(ctx.child)+')'
 
 
     # Visit a parse tree produced by TxScriptParser#sumSubExpr.
