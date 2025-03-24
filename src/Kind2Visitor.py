@@ -16,7 +16,7 @@ class Kind2Visitor(TxScriptVisitor):
         self.__args_map = {}
         self.__nesting_w = 0
         self.__nesting_aw = 0
-        self.__max_nesting = 0
+        self.__max_nesting = -1
         self.__globals = []
         self.__globals_index = {}
         self.__globals_index_max = {}
@@ -91,20 +91,28 @@ class Kind2Visitor(TxScriptVisitor):
         contract_assumptions = '\n'.join([f'assume starting_aw_{ag} >= 0;' for ag in range(1, self.__A+1)])
         contract_globals = ['var contract_not_constructed: bool;']
         for (g_var,g_type) in self.__globals:
-            if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
-                g_type = 'int'
-            g_init_value = self.__initial_const_globals[g_var.text]
-            contract_globals += [f'const starting_{g_var.text} : {g_type} = {g_init_value};']
+            if g_type == ('MapAddr', 'int'):
+                g_init_value = self.__initial_const_globals[g_var.text]
+                contract_globals += [f'const starting_{g_var.text}_{ag} : int = {g_init_value};' for ag in range(1, self.__A+1)]
+            else:
+                if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
+                    g_type = 'int'
+                g_init_value = self.__initial_const_globals[g_var.text]
+                contract_globals += [f'const starting_{g_var.text} : {g_type} = {g_init_value};']
             # I assume that the visit of the constructor has generated such information
         contract_globals += ['var w: int;']
         contract_globals += [f'var w_{i}: int;' for i in range(self.__max_nesting + 1)]
         contract_globals += [f'var aw_{ag}: int;' for ag in range(1, self.__A+1)]
         contract_globals += [f'var aw_{ag}_{i}: int;' for ag in range(1, self.__A+1) for i in range(self.__max_nesting + 1)]
         for (g_var,g_type) in self.__globals:
-            if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
-                g_type = 'int'
-            contract_globals += [f'var {g_var.text} : {g_type};']
-            contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__globals_index_max[g_var.text])]
+            if g_type == ('MapAddr', 'int'):
+                contract_globals += [f'var {g_var.text}_{ag} : int;' for ag in range(1, self.__A+1)]
+                contract_globals += [f'var {g_var.text}_{ag}_{i} : int;' for i in range(self.__globals_index_max[g_var.text]) for ag in range(1, self.__A+1)]
+            else:
+                if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
+                    g_type = 'int'
+                contract_globals += [f'var {g_var.text} : {g_type};']
+                contract_globals += [f'var {g_var.text}_{i} : {g_type};' for i in range(self.__globals_index_max[g_var.text])]
         contract_globals = '\n'.join(contract_globals)
         
         #commented out because args now are a single variable in the lus input
@@ -163,7 +171,11 @@ class Kind2Visitor(TxScriptVisitor):
             body += 'else'
             same = f'\n\tw = (starting_w -> pre w);'
             same += '\n\t' + '\n\t'.join([f'aw_{i} = (starting_aw_{i} -> pre aw_{i});' for i in range(1, self.__A+1)])
-            same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, _) in self.__globals]) if self.__globals else ''
+            # same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, _) in self.__globals]) if self.__globals else ''
+            aux = '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            same += '\n\t' + (aux if aux else '')
+            aux = '\n\t'.join([g.text + f'_{ag} = ' + f'(starting_{g.text}_{ag} -> pre {g.text}_{ag});' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
+            same += '\n\t' + (aux if aux else '')
             body += f'{same}\n'
             # body += f'\t{self.__functions[keys[-1]]}\n'
             # functions_call += '\t'*n_tabs + keys[-1] + '(xa1, xn, ' + (','.join(self.__proc_args[keys[-1]])+', ' if self.__proc_args[keys[-1]] else '') + 'aw1, aw2, w1, w2, t_aw, t_w, block_num1' + ((', ' + ', '.join([g.text+'Now, '+g.text+'Next, t_'+g.text for (g, _) in self.__globals])) if self.__globals else '') + ', err)'
@@ -181,7 +193,7 @@ let
     {body}
     {all_props}
 tel
-        '''.replace('skip and', '').replace('skip', '').replace(';;', ';')
+        '''.replace('skip and', 'true and').replace('skip', '').replace(';;', ';')
         
         return res 
 
@@ -288,6 +300,7 @@ tel
         if ctx.var.text in self.__not_valid_names:
             raise Exception(f'{ctx.var.text} is not a valid name for a field, please choose a different name')
         self.__globals.append((ctx.var, ('MapAddr', 'int')))
+        # for i in range(1, self.__A+1):
         self.__globals_index[ctx.var.text] = 0
         self.__maps.add(ctx.var.text)
         self.__globals_const[ctx.var.text] = True if ctx.const else False #self.__const
@@ -401,7 +414,7 @@ tel
             self.__requires.add('xn_tx >= 0')
             self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
             self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
-            add_to_body = '(' + self.send('xa_tx', 'xn_tx', negative=True) + ')'
+            add_to_body = '(' + self.send('xa_tx', 'xn_tx', negative=True) + ') and '
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
             self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
             self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
@@ -443,40 +456,78 @@ tel
         args = self.visit(ctx.args)
         self.__add_last_cmd = True
         body = self.visit(ctx.cmds)
+        if '_xa' in body:
+            new_body = 'if (xa = 1) then ' + ('(' if self.__visit_properties else '') + body.format(ag='xa').replace('_xa_tx', '_1_nx').replace('_xa', '_1') + (')' if self.__visit_properties else '')
+            for ag in range(2, self.__A+1):
+                if not self.__visit_properties:
+                    if ag == self.__A:
+                        new_body += ' else '
+                    else:
+                        new_body += f' elsif (xa = {ag}) then '
+                    new_body += body.format(ag='xa').replace('_xa_tx', f'_{ag}_nx').replace('_xa', f'_{ag}')
+                else:
+                    if ag == self.__A:
+                        new_body += ' else '
+                    else:
+                        new_body += f' else if (xa = {ag}) then '
+                    new_body += '(' + body.format(ag='xa').replace('_xa_tx', f'_{ag}_nx').replace('_xa', f'_{ag}') + ')'
+            if not self.__visit_properties:
+                body = new_body + ' fi'
+            else:
+                body = new_body
         body = add_to_body + '\n' + body
         if self.__prefix == 'constructor':
             for (g, ty) in self.__globals:
-                if self.__globals_index[g.text] == 0:
-                    # self.__globals_index[g.text] = 1
-                    if ty == 'int': 
-                        self.__initial_const_globals[g.text] = 0
-                    elif ty == 'Address' or ty == 'Hash' or ty == 'Secret':
-                        self.__initial_const_globals[g.text] = 0# to be updated to modify self.__initial_const_globals[g.text] = ?
-                    elif ty == 'bool':
-                        self.__initial_const_globals[g.text] = 'false' # to be updated to modify self.__initial_const_globals[g.text] = ?
-                    elif ty == 'String':
-                        self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
-                    else:
-                        self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
+                if ty == 'bool':
+                    self.__initial_const_globals[g.text] = 'false'
+                # elif ty == ('MapAddr', 'int'):
+                #     for i in range(1, self.__A + 1):
+                #         self.__initial_const_globals[f'{g.text}_{i}'] = 0
+                else:
+                    self.__initial_const_globals[g.text] = 0
+            # for (g, ty) in self.__globals:
+            #     if g.text not in self.__globals and g.text
+            #     if self.__globals_index[g.text] == 0:
+            #         # self.__globals_index[g.text] = 1
+            #         if ty == 'int': 
+            #             self.__initial_const_globals[g.text] = 0
+            #         elif ty == 'Address' or ty == 'Hash' or ty == 'Secret':
+            #             self.__initial_const_globals[g.text] = 0# to be updated to modify self.__initial_const_globals[g.text] = ?
+            #         elif ty == 'bool':
+            #             self.__initial_const_globals[g.text] = 'false' # to be updated to modify self.__initial_const_globals[g.text] = ?
+            #         elif ty == 'String':
+            #             self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
+            #         else:
+            #             self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
         self.__proc_args[self.__prefix] = args
         if not self.__visit_properties:
             skip = f'\n\tw = {self.__t_curr_w};'
             skip += '\n\t' + '\n\t'.join([f'aw_{i} = {self.__t_curr_a[i]};' for i in range(1, self.__A+1)])
-            skip += '\n\t' + '\n\t'.join([g.text + ' = ' + (f'(starting_{g.text} -> pre {g.text});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for (g, _) in self.__globals]) if self.__globals else ''        
+            skip += '\n\t' + '\n\t'.join([g.text + ' = ' + (f'(starting_{g.text} -> pre {g.text});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''        
+            skip += '\n\t' + '\n\t'.join([g.text + f'_{ag}' + ' = ' + (f'(starting_{g.text}_{ag} -> pre {g.text}_{ag});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_' + str(ag) + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''        
             skip += '\n\t' + ('contract_not_constructed = false;' if self.__prefix == 'constructor' else 'contract_not_constructed = (true -> pre contract_not_constructed);')
             body += skip
             same = '\n\tcontract_not_constructed = true;' if self.__prefix == 'constructor' else '\n\tcontract_not_constructed = (true -> pre contract_not_constructed);'
             same += f'\n\tw = (starting_w -> pre w);'
             same += '\n\t' + '\n\t'.join([f'aw_{i} = (starting_aw_{i} -> pre aw_{i});' for i in range(1, self.__A+1)])
-            same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, _) in self.__globals]) if self.__globals else ''
+            same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            same += '\n\t' + '\n\t'.join([g.text + f'_{ag}' + ' = ' + f'(starting_{g.text}_{ag} -> pre {g.text}_{ag});' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
         else:
-            skip = f' and \n\tw_nx = {self.__t_curr_w}'
+            skip = f' \n\tw_nx = {self.__t_curr_w}'
             skip += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = {self.__t_curr_a[i]}' for i in range(1, self.__A+1)])
-            skip += ' and \n\t' + '\n\t and '.join([g.text + '_nx = ' + (f'{g.text}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier)) for (g, _) in self.__globals]) if self.__globals else ''        
+            aux = '\n\t and '.join([g.text + '_nx = ' + (f'{g.text}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+'_nx' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''        
+            skip += ' and \n\t' + (aux if aux else 'true')
+            aux = '\n\t and '.join([g.text + '_' + str(ag) + '_nx = ' + (f'{g.text}_{ag}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_' + str(ag) +'_nx' + '_' + str(self.__globals_index[g.text]+self.__globals_modifier)) for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''        
+            skip += ' and \n\t' + (aux if aux else 'true')
+            if body.replace('skip', '').replace('\n', '').replace(' ', '').replace('and', ''):
+                skip = ' and' + skip
             body += skip
             same = f'\n\tw_nx = w'
             same += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = aw_{i}' for i in range(1, self.__A+1)])
-            same += ' and \n\t' + '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, _) in self.__globals]) if self.__globals else ''
+            aux = '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            same += ' and \n\t' + (aux if aux else 'true')
+            aux = '\n\t and '.join([g.text + '_' + str(ag) + '_nx = ' + f'{g.text}_{ag}' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
+            same += ' and \n\t' + (aux if aux else 'true')
     
         
 
@@ -673,12 +724,12 @@ tel
         # self.__globals_modifier += 1
         i = self.__globals_index[left]
         self.__globals_index[left] = i+1
-        if self.__prefix == 'constructor':
-            for (g, ty) in self.__globals:
-                if ty == 'bool':
-                    self.__initial_const_globals[left] = 'false'
-                else:
-                    self.__initial_const_globals[left] = 0
+        # if self.__prefix == 'constructor':
+        #     for (g, ty) in self.__globals:
+        #         if ty == 'bool':
+        #             self.__initial_const_globals[left] = 'false'
+        #         else:
+        #             self.__initial_const_globals[left] = 0
         aux = 0
         while '[' in right[aux:] and ']' in right[aux:] and right[right.index('[', aux)+1:right.index(']', aux)].isnumeric():
             aux = right.index(']', aux) + 1
@@ -696,12 +747,17 @@ tel
         left = ctx.var.text
         index = self.visit(ctx.index)
         self.__globals_modifier -= 1
-        right = self.visit(ctx.child).replace(str(index), 'j')
+        right = self.visit(ctx.child)#.replace(str(index), 'j')
         self.__globals_modifier += 1
+
+        if left in self.__globals_index:
+            index = f'{index}_{self.__globals_index[left]}'
+
         i = self.__globals_index[left]
         self.__globals_index[left] = i+1
-        prev_i = f'{left}Now' if i == 0 else f't_{left}[{str(i-1)}]'
-        return f'And(And([Or(j!={str(index)}, t_{left}[{str(i)}][j] == {right}) for j in range(A+1)]), And([Or(j=={str(index)}, t_{left}[{str(i)}][j] == {prev_i}[j]) for j in range(A+1)]))' 
+        return f'{left}_{index} = {right}' + (';' if not self.__visit_properties else '')
+        # prev_i = f'{left}Now' if i == 0 else f't_{left}[{str(i-1)}]'
+        # return f'And(And([Or(j!={str(index)}, t_{left}[{str(i)}][j] == {right}) for j in range(A+1)]), And([Or(j=={str(index)}, t_{left}[{str(i)}][j] == {prev_i}[j]) for j in range(A+1)]))' 
         # return 'And('+ 'And(' + f'[t_{left}[{str(i)}][j] == {right} for j in range(A+1) if j == {str(index)}]' + ')' + ', ' + 'And(' + f'[t_{left}[{str(i)}][j] == {prev_i}[j] for j in range(A+1) if j != {str(index)}]' + ')' ')'
         # return 'And('+ 't_'+left+'['+str(i)+']'+'['+str(index)+']' + ' == ' + right + ', ' + 'And(' + f'[t_{left}[{str(i)}][j] == {prev_i}[j] for j in range(A+1) if j != {str(index)}]' + ')' ')'
 
@@ -1067,20 +1123,28 @@ tel
         contract_globals += [f'aw_{ag}_nx: int;' for ag in range(1, self.__A+1)]
         contract_globals += [f'aw_{ag}_{i}_nx: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
         for (g_var,g_type) in self.__globals:
-            if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
-                g_type = 'int'
-            contract_globals += [f'{g_var.text}_nx : {g_type};']
-            contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__M + 1)]  # double check when we start reusing maps!
+            if g_type == ('MapAddr', 'int'):
+                contract_globals += [f'{g_var.text}_{ag}_nx : int;' for ag in range(1, self.__A+1)]
+                contract_globals += [f'{g_var.text}_{ag}_nx_{i} : int;' for i in range(self.__globals_index_max[g_var.text]) for ag in range(1, self.__A+1)] 
+            else:
+                if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
+                    g_type = 'int'
+                contract_globals += [f'{g_var.text}_nx : {g_type};']
+                contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__M + 1)]  
         for j in range(2, ntrans+1):
             contract_globals += [f'w_nx{j}: int;']
             contract_globals += [f'w_{i}_nx{j}: int;' for i in range(self.__M + 1)]
             contract_globals += [f'aw_{ag}_nx{j}: int;' for ag in range(1, self.__A+1)]
             contract_globals += [f'aw_{ag}_{i}_nx{j}: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
             for (g_var,g_type) in self.__globals:
-                if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
-                    g_type = 'int'
-                contract_globals += [f'{g_var.text}_nx{j} : {g_type};']
-                contract_globals += [f'{g_var.text}_{i}_nx{j} : {g_type};' for i in range(self.__M + 1)]  # double check when we start reusing maps!
+                if g_type == ('MapAddr', 'int'):
+                    contract_globals += [f'{g_var.text}_{ag}_nx{j} : int;' for ag in range(1, self.__A+1)]
+                    contract_globals += [f'{g_var.text}_{ag}_{i}_nx{j} : int;' for i in range(self.__M + 1) for ag in range(1, self.__A+1)]
+                else:
+                    if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
+                        g_type = 'int'
+                    contract_globals += [f'{g_var.text}_nx{j} : {g_type};']
+                    contract_globals += [f'{g_var.text}_{i}_nx{j} : {g_type};' for i in range(self.__M + 1)]
             
         next_state_vars = ' '.join(contract_globals)
         implication = 'not(' + self.visit(ctx.where) + ')'
@@ -1110,7 +1174,11 @@ tel
             contract += 'else'
             same = f'\n\tw_nx = w '
             same += ' and \n\t' + '\n\tand '.join([f'aw_{i}_nx = aw_{i}' for i in range(1, self.__A+1)])
-            same += ' and \n\t' + '\n\tand '.join([g.text + '_nx = ' + f'{g.text}' for (g, _) in self.__globals]) if self.__globals else ''
+            # same += ' and \n\t' + '\n\tand '.join([g.text + '_nx = ' + f'{g.text}' for (g, _) in self.__globals]) if self.__globals else ''
+            aux = '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            same += ' and \n\t' + (aux if aux else 'true')
+            aux = '\n\t and '.join([g.text + '_' + str(ag) + '_nx = ' + f'{g.text}_{ag}' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
+            same += ' and \n\t' + (aux if aux else 'true')
             contract += f'{same}\n'
         contracts = [contract]
         nx = '_nx'
@@ -1136,6 +1204,8 @@ tel
             for j in range(1, self.__A+1):
                 pattern = re.escape(f'aw_{j}') + r'(?!_)'
                 aux = re.sub(pattern, f'aw_{j}{nx}', aux)
+            aux = aux.replace('_tx', f'_tx{i}')
+            aux = aux.replace(f'xa_tx{i}', 'xa_tx')
             contracts.append(aux)
             nx = f'_nx{i}'
             nx1 = f'_nx{i+1}'
@@ -1173,11 +1243,11 @@ forall (xa_tx: int;)
         if not self.__visit_properties:
             if ctx.mapVar.text in self.__globals_index:
                 self.__prop_nested_i.add(index)
-                if self.__globals_index[ctx.mapVar.text]+self.__globals_modifier < 0:
-                    return ctx.mapVar.text + 'Now' + '['+index+']'
+                if self.__globals_index[ctx.mapVar.text] + self.__globals_modifier < 0:
+                    return f'(starting_{ctx.mapVar.text}_{index} -> pre {ctx.mapVar.text}_{index})'
                 else:
-                    return 't_'+ctx.mapVar.text + '['+str(self.__globals_index[ctx.mapVar.text]+self.__globals_modifier)+']' + '['+index+']'
-            return ctx.mapVar.text + '[' + index + ']'
+                    return f'{ctx.mapVar.text}_{index}_' + str(self.__globals_index[ctx.mapVar.text])
+            return f'{ctx.mapVar.text}_{index}' #ctx.mapVar.text + '[' + index + ']'
         else:
             if 'app_tx_st' in ctx.mapVar.text:
                 i = '_nx'
@@ -1199,12 +1269,12 @@ forall (xa_tx: int;)
                 ag = index.replace('_q', '')
                 if ag == 'xa':
                     self.__prop_nested_i.add(ag+'_q')#(ag+'[i]')
-                    return name.replace('st.','') + i
+                    return name.replace('st.','') + f'_{ag}' + i
                 else:
                     # if '[i]' not in ag:
                     #     ag = ag+'[i]'
                     self.__prop_nested_i.add(ag)#(ag+'[i]')
-                    return name.replace('st.','') + i
+                    return name.replace('st.','') + '_{ag}' + i
             return name.replace('st.', '')
 
 

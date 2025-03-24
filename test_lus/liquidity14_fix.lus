@@ -18,14 +18,13 @@ var b : bool;
 var b_0 : bool;
 let
     if (true -> pre contract_not_constructed) then
-if (xn=0 and (xa = 1 or xa = 2)) then 
+if ((xa = 1 or xa = 2) and xn=0) then 
 
 b_0 = false;
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = b_0;
-	
 	contract_not_constructed = false; 
 else 
 	contract_not_constructed = true;
@@ -33,10 +32,9 @@ else
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = (starting_b -> pre b);
-	
 fi
 elsif f = unlock_func then
-	if (xn=0 and not((starting_b -> pre b)) and (xa = 1 or xa = 2)) then 
+	if ((xa = 1 or xa = 2) and xn=0 and not((starting_b -> pre b))) then 
 
 
 b_0 = true;
@@ -44,7 +42,6 @@ b_0 = true;
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = b_0;
-	
 	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
 	contract_not_constructed = (true -> pre contract_not_constructed);
@@ -52,10 +49,9 @@ else
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = (starting_b -> pre b);
-	
 fi
 	elsif f = pay_func then
-	if ((pay_func_amount<=(starting_w -> pre w) and (starting_b -> pre b)) and xn=0 and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (xa = 1 or xa = 2)) then 
+	if ((xa = 1 or xa = 2) and xn=0 and (pay_func_amount<=(starting_w -> pre w) and (starting_b -> pre b)) and pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w)) then 
 
 
 b_0 = false;
@@ -72,7 +68,6 @@ fi
 	aw_1 = aw_1_0;
 	aw_2 = aw_2_0;
 	b = b_0;
-	
 	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
 	contract_not_constructed = (true -> pre contract_not_constructed);
@@ -80,14 +75,12 @@ else
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = (starting_b -> pre b);
-	
 fi
 else
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	b = (starting_b -> pre b);
-	
 fi
     --%PROPERTY 
 forall (xa_tx: int;)
@@ -106,23 +99,21 @@ forall (xa_tx: int;)
         (if f_tx = unlock_func then
 	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
 
-true and b_0_nx = true and 
+ b_0_nx = true and 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0_nx
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 	else if f_tx = pay_func then
-	if ((pay_func_amount_tx<=w and b) and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
 
-true and b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
@@ -133,21 +124,18 @@ else
 	w_nx = w_0_nx and 
 	aw_1_nx = aw_1_0_nx
 	 and aw_2_nx = aw_2_0_nx and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0_nx
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
 	and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 )
         )
     );
@@ -169,23 +157,21 @@ forall (xa_tx: int;)
         (if f_tx = unlock_func then
 	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
 
-true and b_0_nx = true and 
+ b_0_nx = true and 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0 
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 	else if f_tx = pay_func then
-	if ((pay_func_amount_tx<=w and b) and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
 
-true and b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
@@ -196,21 +182,18 @@ else
 	w_nx = w_0_nx and 
 	aw_1_nx = aw_1_0_nx
 	 and aw_2_nx = aw_2_0_nx and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0 
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
 	and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 )
         )
     );
@@ -232,23 +215,21 @@ forall (xa_tx: int;)
         (if f_tx = unlock_func then
 	if ((xa_tx = 1 or xa_tx = 2) and not(b) and xn_tx=0) then 
 
-true and b_0_nx = true and 
+ b_0_nx = true and 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0_nx
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 	else if f_tx = pay_func then
-	if ((pay_func_amount_tx<=w and b) and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and b) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
 
-true and b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
+ b_0_nx = false and (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
@@ -259,41 +240,36 @@ else
 	w_nx = w_0_nx and 
 	aw_1_nx = aw_1_0_nx
 	 and aw_2_nx = aw_2_0_nx and 
-	b_nx = b_0_nx and 
-	true 
+	b_nx = b_0_nx 
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
 	and aw_2_nx = aw_2 and 
-	b_nx = b and 
-	true
+	b_nx = b
 ) and (if f_tx2 = unlock_func then
-	if ((xa_tx = 1 or xa_tx = 2) and not(b_nx) and xn_tx2=0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and not(b_nx) and xn_tx=0) then 
 
-true and b_0_nx2 = true and 
+ b_0_nx2 = true and 
 	w_nx2 = w_nx and 
 	aw_1_nx2 = aw_1_nx
 	 and aw_2_nx2 = aw_2_nx and 
-	b_nx2 = b_0_nx2 and 
-	true 
+	b_nx2 = b_0_nx2 
 else 
 	w_nx2 = w_nx and 
 	aw_1_nx2 = aw_1_nx
 	 and aw_2_nx2 = aw_2_nx and 
-	b_nx2 = b_nx and 
-	true
+	b_nx2 = b_nx
 
 	else if f_tx2 = pay_func then
-	if ((pay_func_amount_tx2<=w and b_nx) and pay_func_amount_tx2 >= 0 and pay_func_amount_tx2 <= w_nx and (xa_tx = 1 or xa_tx = 2) and xn_tx2=0) then 
+	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx2<=w_nx and b_nx) and xn_tx2=0 and pay_func_amount_tx2 >= 0 and pay_func_amount_tx2 <= w_nx) then 
 
-true and b_0_nx2 = false and (w_0_nx2 = w_nx - pay_func_amount_tx2 and
+ b_0_nx2 = false and (w_0_nx2 = w_nx - pay_func_amount_tx2 and
 if (xa_tx = 1) then
 	aw_1_0_nx2 = aw_1_nx + pay_func_amount_tx2 and
 	aw_2_0_nx2 = aw_2_nx
@@ -304,24 +280,20 @@ else
 	w_nx2 = w_0_nx2 and 
 	aw_1_nx2 = aw_1_0_nx2
 	 and aw_2_nx2 = aw_2_0_nx2 and 
-	b_nx2 = b_0_nx2 and 
-	true 
+	b_nx2 = b_0_nx2 
 else 
 	w_nx2 = w_nx and 
 	aw_1_nx2 = aw_1_nx
 	 and aw_2_nx2 = aw_2_nx and 
-	b_nx2 = b_nx and 
-	true
+	b_nx2 = b_nx
 
 else
 	w_nx2 = w_nx  and 
 	aw_1_nx2 = aw_1_nx
 	and aw_2_nx2 = aw_2_nx and 
-	b_nx2 = b_nx and 
-	true
+	b_nx2 = b_nx
 )
         )
     );
 
 tel
-        

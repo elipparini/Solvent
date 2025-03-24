@@ -1,0 +1,112 @@
+
+type functions = enum { dummy, foo_func };
+node mapping1 (xa:int;xn:int;f:functions;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_m_1 : int = 0;
+const starting_m_2 : int = 0;
+var w: int;
+var aw_1: int;
+var aw_2: int;
+var m_1 : int;
+var m_2 : int;
+var m_1_0 : int;
+var m_2_0 : int;
+let
+    if (true -> pre contract_not_constructed) then
+if ((xa = 1 or xa = 2) and xn=0) then 
+
+
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	m_1 = (starting_m_1 -> pre m_1);
+	m_2 = (starting_m_2 -> pre m_2);
+	contract_not_constructed = false; 
+else 
+	contract_not_constructed = true;
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	m_1 = (starting_m_1 -> pre m_1);
+	m_2 = (starting_m_2 -> pre m_2);
+fi
+elsif f = foo_func then
+	if ((xa = 1 or xa = 2) and xn=0) then 
+
+if (xa = 1) then m_1_0 = ((starting_m_1 -> pre m_1)+1); else m_2_0 = ((starting_m_2 -> pre m_2)+1); fi
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	m_1 = m_1_0;
+	m_2 = m_2_0;
+	contract_not_constructed = (true -> pre contract_not_constructed); 
+else 
+	contract_not_constructed = (true -> pre contract_not_constructed);
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	m_1 = (starting_m_1 -> pre m_1);
+	m_2 = (starting_m_2 -> pre m_2);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	m_1 = (starting_m_1 -> pre m_1);
+	m_2 = (starting_m_2 -> pre m_2);
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(true) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions;  xn_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int; m_1_nx : int; m_2_nx : int; m_1_nx_0 : int; m_2_nx_0 : int; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or m_1_nx = (m_1+1)) and (not(xa_tx = 2) or m_2_nx = (m_2+1))
+        )
+        and
+        (
+        (if f_tx = foo_func then
+	if ((xa_tx = 1 or xa_tx = 2) and xn_tx=0) then 
+
+if (xa = 1) then (m_1_nx_0 = (m_1+1)) else (m_2_nx_0 = (m_2+1)) and 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	true and 
+	m_1_nx = m_1_nx_0
+	 and m_2_nx = m_2_nx_0 
+else 
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	true and 
+	m_1_nx = m_1
+	 and m_2_nx = m_2
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	true and 
+	m_1_nx = m_1
+	 and m_2_nx = m_2
+)
+        )
+    );
+
+tel
+        

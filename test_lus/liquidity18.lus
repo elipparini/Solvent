@@ -20,13 +20,14 @@ var aw_2_1: int;
 var count : int;
 let
     if (true -> pre contract_not_constructed) then
-if ((xa = 1 or xa = 2) and xn=0) then 
+if (xn=0 and (xa = 1 or xa = 2)) then 
 
 
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	count = (starting_count -> pre count);
+	
 	contract_not_constructed = false; 
 else 
 	contract_not_constructed = true;
@@ -34,9 +35,10 @@ else
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	count = (starting_count -> pre count);
+	
 fi
 elsif f = pay_func then
-	if (1 >= 0 and 1 <= (starting_w -> pre w) and pay_func_amount<=(starting_w -> pre w) and (pay_func_amount-1)<=w_0 and (xa = 1 or xa = 2) and (pay_func_amount-1) >= 0 and (pay_func_amount-1) <= (starting_w -> pre w) and xn=0) then 
+	if ((pay_func_amount-1) >= 0 and (pay_func_amount-1) <= (starting_w -> pre w) and pay_func_amount<=(starting_w -> pre w) and (pay_func_amount-1)<=w_0 and (xa = 1 or xa = 2) and xn=0 and 1 >= 0 and 1 <= (starting_w -> pre w)) then 
 
 
 w_0 = (starting_w -> pre w) - 1;
@@ -62,6 +64,7 @@ fi
 	aw_1 = aw_1_1;
 	aw_2 = aw_2_1;
 	count = (starting_count -> pre count);
+	
 	contract_not_constructed = (true -> pre contract_not_constructed); 
 else 
 	contract_not_constructed = (true -> pre contract_not_constructed);
@@ -69,12 +72,14 @@ else
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	count = (starting_count -> pre count);
+	
 fi
 else
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
 	count = (starting_count -> pre count);
+	
 fi
     --%PROPERTY 
 forall (xa_tx: int;)
@@ -91,16 +96,16 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = pay_func then
-	if ((pay_func_amount_tx-1)<=w and 1 >= 0 and 1 <= w and xn_tx=0 and (xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx-1) >= 0 and (pay_func_amount_tx-1) <= w and pay_func_amount_tx<=w) then 
+	if (xn_tx=0 and 1 >= 0 and 1 <= w and (pay_func_amount_tx-1)<=w and (pay_func_amount_tx-1) >= 0 and (pay_func_amount_tx-1) <= w and pay_func_amount_tx<=w and (xa_tx = 1 or xa_tx = 2)) then 
 
- (w_0_nx = w - 1 and
+true and (w_0_nx = w - 1 and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + 1 and
 	aw_2_0_nx = aw_2
 else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 + 1
-) and  (w_1_nx = w_0_nx - (pay_func_amount_tx-1) and
+) and true and (w_1_nx = w_0_nx - (pay_func_amount_tx-1) and
 if (xa_tx = 1) then
 	aw_1_1_nx = aw_1_0_nx + (pay_func_amount_tx-1) and
 	aw_2_1_nx = aw_2_0_nx
@@ -111,18 +116,21 @@ else
 	w_nx = w_1_nx and 
 	aw_1_nx = aw_1_1_nx
 	 and aw_2_nx = aw_2_1_nx and 
-	count_nx = count 
+	count_nx = count_nx and 
+	true 
 else 
 	w_nx = w and 
 	aw_1_nx = aw_1
 	 and aw_2_nx = aw_2 and 
-	count_nx = count
+	count_nx = count and 
+	true
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
 	and aw_2_nx = aw_2 and 
-	count_nx = count
+	count_nx = count and 
+	true
 )
         )
     );

@@ -91,27 +91,28 @@ forall (xa_tx: int;)
         and
         (
         if f_tx = pay_func then
-	if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0 and a = b) then 
+			if (pay_func_amount_tx >= 0 and pay_func_amount_tx <= w and (xa_tx = 1 or xa_tx = 2) and xn_tx=0 and a = b) then 
 
- (w_0_nx = w - pay_func_amount_tx and
-if (xa_tx = 1) then
-	aw_1_0_nx = aw_1 + pay_func_amount_tx and
-	aw_2_0_nx = aw_2
-else
-	aw_1_0_nx = aw_1 and
-	aw_2_0_nx = aw_2 + pay_func_amount_tx
-) and a_0_nx = (a+1) and b_0_nx = (b+1)and 
-	w_nx = w_0_nx and 
-	aw_1_nx = aw_1_0_nx
-	 and aw_2_nx = aw_2_0_nx and 
-	a_nx = a_0
-	 and b_nx = b_0 
-else 
-	w_nx = w and 
-	aw_1_nx = aw_1
-	 and aw_2_nx = aw_2 and 
-	a_nx = a
-	 and b_nx = b
+				(w_0_nx = w - pay_func_amount_tx and
+				if (xa_tx = 1) then
+					aw_1_0_nx = aw_1 + pay_func_amount_tx and
+					aw_2_0_nx = aw_2
+				else
+					aw_1_0_nx = aw_1 and
+					aw_2_0_nx = aw_2 + pay_func_amount_tx
+				) 
+				and a_0_nx = (a+1) and b_0_nx = (b+1)and 
+				w_nx = w_0_nx and 
+				aw_1_nx = aw_1_0_nx
+				and aw_2_nx = aw_2_0_nx and 
+				a_nx = a_0
+				and b_nx = b_0 
+			else 
+				w_nx = w and 
+				aw_1_nx = aw_1
+				and aw_2_nx = aw_2 and 
+				a_nx = a
+				and b_nx = b
 
 else
 	w_nx = w  and 
