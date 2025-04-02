@@ -1,5 +1,5 @@
 
-type functions = enum { dummy, pay_func,receive_func };
+type functions = enum { dummy, receive_func,pay_func };
 node blacklist (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
 (*@contract
     assume starting_w >= 0;
@@ -7,30 +7,34 @@ node blacklist (xa:int;xn:int;f:functions;pay_func_amount:int;starting_w: int;st
 assume starting_aw_2 >= 0;
 *)
 var contract_not_constructed: bool;
+const starting_err : bool = false;
 var w: int;
 var w_0: int;
 var aw_1: int;
 var aw_2: int;
 var aw_1_0: int;
 var aw_2_0: int;
+var err : bool;
+var err_0 : bool;
 let
     if (true -> pre contract_not_constructed) then
-if (xn=0 and (xa = 1 or xa = 2)) then 
 
-
+ if (err) then 
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
-	contract_not_constructed = false; 
-else 
-	contract_not_constructed = true;
+	
+	
+	contract_not_constructed = true; else 
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	
+	contract_not_constructed = false;
 fi
 elsif f = receive_func then
-	if (xn >= 0 and (xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn))) then 
-w_0 = (starting_w -> pre w) + xn;
+	w_0 = (starting_w -> pre w) + xn;
 if (xa = 1) then
 	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
 	aw_2_0 = (starting_aw_2 -> pre aw_2);
@@ -39,20 +43,23 @@ else
 	aw_2_0 = (starting_aw_2 -> pre aw_2) - xn;
 fi
 
-
-	w = w_0;
-	aw_1 = aw_1_0;
-	aw_2 = aw_2_0;
-	contract_not_constructed = (true -> pre contract_not_constructed); 
-else 
-	contract_not_constructed = (true -> pre contract_not_constructed);
+ if (err) then 
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed); else 
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed);
 fi
 	elsif f = pay_func then
-	if (pay_func_amount >= 0 and pay_func_amount <= (starting_w -> pre w) and (pay_func_amount<=(starting_w -> pre w) and not(xa=1)) and xn=0 and (xa = 1 or xa = 2)) then 
-
+	
+if (not((pay_func_amount<=(starting_w -> pre w) and not(xa=1)))) then err_0=true; fi
 
 w_0 = (starting_w -> pre w) - pay_func_amount;
 if (xa = 1) then
@@ -62,21 +69,26 @@ else
 	aw_1_0 = (starting_aw_1 -> pre aw_1);
 	aw_2_0 = (starting_aw_2 -> pre aw_2) + pay_func_amount;
 fi
-
-	w = w_0;
-	aw_1 = aw_1_0;
-	aw_2 = aw_2_0;
-	contract_not_constructed = (true -> pre contract_not_constructed); 
-else 
-	contract_not_constructed = (true -> pre contract_not_constructed);
+ if (err) then 
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed); else 
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed);
 fi
 else
 	w = (starting_w -> pre w);
 	aw_1 = (starting_aw_1 -> pre aw_1);
 	aw_2 = (starting_aw_2 -> pre aw_2);
+	err = (starting_err -> pre err);
+	
 fi
     --%PROPERTY 
 forall (xa_tx: int;)
@@ -84,7 +96,7 @@ forall (xa_tx: int;)
     or
     exists (
             f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
-            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; /* Next state vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; err_nx : bool; err_0_nx : bool; /* Next state vars */
     )
     (
         (   /* condition */
@@ -93,8 +105,7 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = receive_func then
-	if (((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2)) then 
-(w_0_nx = w + xn_tx and
+	(w_0_nx = w + xn_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 - xn_tx and
 	aw_2_0_nx = aw_2
@@ -102,38 +113,48 @@ else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 - xn_tx
 ) and 
-true and 
-	w_nx = w_0_nx and 
-	aw_1_nx = aw_1_0_nx
-	 and aw_2_nx = aw_2_0_nx 
-else 
+true and if (err_nx) then 
+
 	w_nx = w and 
 	aw_1_nx = aw_1
-	 and aw_2_nx = aw_2
+	 and aw_2_nx = aw_2 and 
+	true and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	true and 
+	true
 
 	else if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and not(xa_tx=1)) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
-
-true and (w_0_nx = w - pay_func_amount_tx and
+	
+if (not((pay_func_amount_tx<=w and not(xa_tx=1)))) then err_0_nx=true else true
+ and (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
 else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 + pay_func_amount_tx
-) and 
-	w_nx = w_0_nx and 
-	aw_1_nx = aw_1_0_nx
-	 and aw_2_nx = aw_2_0_nx 
-else 
+) and if (err_nx) then 
+
 	w_nx = w and 
 	aw_1_nx = aw_1
-	 and aw_2_nx = aw_2
+	 and aw_2_nx = aw_2 and 
+	true and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	true and 
+	true
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
-	and aw_2_nx = aw_2
+	and aw_2_nx = aw_2 and 
+	err_nx = err and 
+	true
 )
         )
     );
@@ -144,7 +165,7 @@ forall (xa_tx: int;)
     or
     exists (
             f_tx: functions; pay_func_amount_tx: int; xn_tx: int;  /* Transition vars */
-            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; /* Next state vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; err_nx : bool; err_0_nx : bool; /* Next state vars */
     )
     (
         (   /* condition */
@@ -153,8 +174,7 @@ forall (xa_tx: int;)
         and
         (
         (if f_tx = receive_func then
-	if (((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)) and xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2)) then 
-(w_0_nx = w + xn_tx and
+	(w_0_nx = w + xn_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 - xn_tx and
 	aw_2_0_nx = aw_2
@@ -162,38 +182,48 @@ else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 - xn_tx
 ) and 
-true and 
-	w_nx = w_0_nx and 
-	aw_1_nx = aw_1_0_nx
-	 and aw_2_nx = aw_2_0_nx 
-else 
+true and if (err_nx) then 
+
 	w_nx = w and 
 	aw_1_nx = aw_1
-	 and aw_2_nx = aw_2
+	 and aw_2_nx = aw_2 and 
+	true and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	true and 
+	true
 
 	else if f_tx = pay_func then
-	if ((xa_tx = 1 or xa_tx = 2) and (pay_func_amount_tx<=w and not(xa_tx=1)) and xn_tx=0 and pay_func_amount_tx >= 0 and pay_func_amount_tx <= w) then 
-
-true and (w_0_nx = w - pay_func_amount_tx and
+	
+if (not((pay_func_amount_tx<=w and not(xa_tx=1)))) then err_0_nx=true else true
+ and (w_0_nx = w - pay_func_amount_tx and
 if (xa_tx = 1) then
 	aw_1_0_nx = aw_1 + pay_func_amount_tx and
 	aw_2_0_nx = aw_2
 else
 	aw_1_0_nx = aw_1 and
 	aw_2_0_nx = aw_2 + pay_func_amount_tx
-) and 
-	w_nx = w_0_nx and 
-	aw_1_nx = aw_1_0_nx
-	 and aw_2_nx = aw_2_0_nx 
-else 
+) and if (err_nx) then 
+
 	w_nx = w and 
 	aw_1_nx = aw_1
-	 and aw_2_nx = aw_2
+	 and aw_2_nx = aw_2 and 
+	true and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	true and 
+	true
 
 else
 	w_nx = w  and 
 	aw_1_nx = aw_1
-	and aw_2_nx = aw_2
+	and aw_2_nx = aw_2 and 
+	err_nx = err and 
+	true
 )
         )
     );

@@ -60,6 +60,7 @@ def parseFile(file):
                 pattern = pattern[:pattern.index('}')] + '\nconstructor(){\n\tskip\n}\n' + pattern[pattern.index('}'):]
     pattern = re.sub(r'\.transfer\((.*?)\)', r'!\1', pattern)
     pattern = pattern.replace('<tx> ', '<tx>').replace('<tx>', 'app_tx_st.')
+    pattern = re.sub(r'(contract\s+\w+\s*\{)', lambda match: match.group(1) + ' bool err;', pattern)
     parse(pattern)
 
 def main(args):

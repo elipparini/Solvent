@@ -193,7 +193,7 @@ let
     {body}
     {all_props}
 tel
-        '''.replace('skip and', 'true and').replace('skip', '').replace(';;', ';')
+        '''.replace('skip and', 'true and').replace('and skip', 'and true').replace('skip', '').replace(';;', ';')
         
         return res 
 
@@ -359,20 +359,30 @@ tel
         for k in self.__globals_index:
             self.__globals_index[k] = 0
         self.__requires = set()
+        err = 'err' + '_' + str(self.__globals_index['err'])
+        err1 = 'err' + '_' + str(self.__globals_index['err']-1) if self.__globals_index['err'] > 0 else 'false'
+        self.__globals_index['err'] += 1
         if not self.__visit_properties: 
-            self.__requires.add('xn >= 0')
-            self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
-            self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
-            add_to_body = self.send('xa', 'xn', negative=True)
+            req1 = '(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')'
+            req2 = '(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')'
+            req = f'if (not(xn >= 0 and {req1} and {req2})) then {err}=true; else {err}={err1}, fi\n'
+            # self.__requires.add('xn >= 0')
+            # self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
+            # self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = req + self.send('xa', 'xn', negative=True)
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
             self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
             self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
             self.__t_new_w = 'w_' + str(self.__nesting_w)
         else:
-            self.__requires.add('xn_tx >= 0')
-            self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
-            self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
-            add_to_body = '(' + self.send('xa_tx', 'xn_tx', negative=True) + ')'
+            req1 = '(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')'
+            req2 = '(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')'
+            err1 = err1+'_nx' if err1 != 'false' else err1
+            req = f'(if (not(xn_tx >= 0 and {req1} and {req2})) then {err}_nx=true else {err}={err1})\n'
+            # self.__requires.add('xn_tx >= 0')
+            # self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
+            # self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = req + ' and (' + self.send('xa_tx', 'xn_tx', negative=True) + ')'
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
             self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
             self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
@@ -401,20 +411,30 @@ tel
         for k in self.__globals_index:
             self.__globals_index[k] = 0
         self.__requires = set()
+        err = 'err' + '_' + str(self.__globals_index['err'])
+        err1 = 'err' + '_' + str(self.__globals_index['err']-1) if self.__globals_index['err'] > 0 else 'false'
+        self.__globals_index['err'] += 1
         if not self.__visit_properties: 
-            self.__requires.add('xn >= 0')
-            self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
-            self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
-            add_to_body = self.send('xa', 'xn', negative=True)
+            req1 = '(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')'
+            req2 = '(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')'
+            req = f'if (not(xn >= 0 and {req1} and {req2})) then {err}=true; else {err}={err1}; fi\n'
+            # self.__requires.add('xn >= 0')
+            # self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
+            # self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = req + self.send('xa', 'xn', negative=True)
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
             self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}' for i in range(self.__A+1)]
             self.__t_curr_w = 'w_' + str(self.__nesting_w-1)
             self.__t_new_w = 'w_' + str(self.__nesting_w)
         else:
-            self.__requires.add('xn_tx >= 0')
-            self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
-            self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
-            add_to_body = '(' + self.send('xa_tx', 'xn_tx', negative=True) + ') and '
+            req1 = '(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')'
+            req2 = '(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')'
+            err1 = err1+'_nx' if err1 != 'false' else err1
+            req = f'(if (not(xn_tx >= 0 and {req1} and {req2})) then {err}_nx=true else {err}_nx={err1})\n'
+            # self.__requires.add('xn_tx >= 0')
+            # self.__requires.add('(' + ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)]) + ')')
+            # self.__requires.add('(' + ' and '.join([f'(not(xa_tx = {i}) or aw_{i} >= xn_tx)' for i in range(1, self.__A+1)]) + ')')
+            add_to_body = req + ' and (' + self.send('xa_tx', 'xn_tx', negative=True) + ') and '
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}_nx' for i in range(self.__A+1)]
             self.__t_new_a = [f'aw_{i}_{self.__nesting_aw}_nx' for i in range(self.__A+1)]
             self.__t_curr_w = 'w_' + str(self.__nesting_w-1) + '_nx'
@@ -500,69 +520,58 @@ tel
             #         else:
             #             self.__initial_const_globals[g.text] = 0 # to be updated to modify self.__initial_const_globals[g.text] = ?
         self.__proc_args[self.__prefix] = args
+        
         if not self.__visit_properties:
             skip = f'\n\tw = {self.__t_curr_w};'
             skip += '\n\t' + '\n\t'.join([f'aw_{i} = {self.__t_curr_a[i]};' for i in range(1, self.__A+1)])
-            skip += '\n\t' + '\n\t'.join([g.text + ' = ' + (f'(starting_{g.text} -> pre {g.text});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''        
+            skip += '\n\t' + '\n\t'.join([g.text + ' = ' + (f'(starting_{g.text} -> pre {g.text});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for (g, ty) in self.__globals if ty != ('MapAddr', 'int') and g.text != 'err']) if self.__globals else ''        
             skip += '\n\t' + '\n\t'.join([g.text + f'_{ag}' + ' = ' + (f'(starting_{g.text}_{ag} -> pre {g.text}_{ag});' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_' + str(ag) + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+';' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''        
-            skip += '\n\t' + ('contract_not_constructed = false;' if self.__prefix == 'constructor' else 'contract_not_constructed = (true -> pre contract_not_constructed);')
-            body += skip
-            same = '\n\tcontract_not_constructed = true;' if self.__prefix == 'constructor' else '\n\tcontract_not_constructed = (true -> pre contract_not_constructed);'
-            same += f'\n\tw = (starting_w -> pre w);'
+            # skip += '\n\t' + ('contract_not_constructed = false;' if self.__prefix == 'constructor' else 'contract_not_constructed = (true -> pre contract_not_constructed);')
+            # body += skip
+            # same = '\n\tcontract_not_constructed = true;' if self.__prefix == 'constructor' else '\n\tcontract_not_constructed = (true -> pre contract_not_constructed);'
+            same = f'\n\tw = (starting_w -> pre w);'
             same += '\n\t' + '\n\t'.join([f'aw_{i} = (starting_aw_{i} -> pre aw_{i});' for i in range(1, self.__A+1)])
-            same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            same += '\n\t' + '\n\t'.join([g.text + ' = ' + f'(starting_{g.text} -> pre {g.text});' for (g, ty) in self.__globals if ty != ('MapAddr', 'int') and g.text != 'err']) if self.__globals else ''
             same += '\n\t' + '\n\t'.join([g.text + f'_{ag}' + ' = ' + f'(starting_{g.text}_{ag} -> pre {g.text}_{ag});' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
         else:
             skip = f' \n\tw_nx = {self.__t_curr_w}'
             skip += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = {self.__t_curr_a[i]}' for i in range(1, self.__A+1)])
-            aux = '\n\t and '.join([g.text + '_nx = ' + (f'{g.text}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+'_nx' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''        
+            aux = '\n\t and '.join([g.text + '_nx = ' + (f'{g.text}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_'+str(self.__globals_index[g.text]+self.__globals_modifier))+'_nx' for (g, ty) in self.__globals if ty != ('MapAddr', 'int') and g.text != 'err']) if self.__globals else ''        
             skip += ' and \n\t' + (aux if aux else 'true')
             aux = '\n\t and '.join([g.text + '_' + str(ag) + '_nx = ' + (f'{g.text}_{ag}' if self.__globals_index[g.text]+self.__globals_modifier < 0 else g.text + '_' + str(ag) +'_nx' + '_' + str(self.__globals_index[g.text]+self.__globals_modifier)) for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''        
             skip += ' and \n\t' + (aux if aux else 'true')
-            if body.replace('skip', '').replace('\n', '').replace(' ', '').replace('and', ''):
-                skip = ' and' + skip
-            body += skip
+            # if body.replace('skip', '').replace('\n', '').replace(' ', '').replace('and', ''):
+            #     skip = ' and' + skip
+            # body += skip
             same = f'\n\tw_nx = w'
             same += ' and \n\t' + '\n\t and '.join([f'aw_{i}_nx = aw_{i}' for i in range(1, self.__A+1)])
-            aux = '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, ty) in self.__globals if ty != ('MapAddr', 'int')]) if self.__globals else ''
+            aux = '\n\t and '.join([g.text + '_nx = ' + f'{g.text}' for (g, ty) in self.__globals if ty != ('MapAddr', 'int') and g.text != 'err']) if self.__globals else ''
             same += ' and \n\t' + (aux if aux else 'true')
             aux = '\n\t and '.join([g.text + '_' + str(ag) + '_nx = ' + f'{g.text}_{ag}' for ag in range(1, self.__A+1) for (g, ty) in self.__globals if ty == ('MapAddr', 'int')]) if self.__globals else ''
             same += ' and \n\t' + (aux if aux else 'true')
-    
         
-
-        if self.__requires:
-            req = ' and '.join(self.__requires)
-            if self.__visit_properties:
-                self.__functions_prop[self.__prefix] = f'if ({req}) then \n{body} \nelse {same}\n'
+        err = ('err_'+str(self.__globals_index['err']+self.__globals_modifier)) if (self.__globals_index['err']+self.__globals_modifier)>=0 else 'false'
+        if self.__visit_properties:
+            if body.replace(' ', '').endswith('and'):
+                self.__functions_prop[self.__prefix] = f'{body} if ({err}_nx) then \n{same} else {skip}\n'
             else:
-                self.__functions[self.__prefix] = f'if ({req}) then \n{body} \nelse {same}\nfi'
-            # err = ', err == Or(False'
-            # for req in self.__requires:
-            #     err += f', Not({req})'
-            # err += ')'
-            # res += err
-            # skip = 'next_state_tx({t_curr_a}, awNext, {t_curr_w}, wNext{global_args_next_state_tx})'.format(
-            #     t_curr_a=self.__t_curr_a, 
-            #     t_curr_w=self.__t_curr_w,
-            #     global_args_next_state_tx = (', ' + ', '.join([(g.text + 'Now' if self.__globals_index[g.text]+self.__globals_modifier < 0 else 't_'+g.text + '['+str(self.__globals_index[g.text]+self.__globals_modifier)+']')+', '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else ''
-            # )
-            # skip = f'{contract_variables}, Or(And(err==True, next_state_tx(awNow, awNext, wNow, wNext'+((', ' + ', '.join([g.text+'Now, '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else '')+f')), And(err==False, {skip}))'
+                self.__functions_prop[self.__prefix] = f'{body} and if ({err}_nx) then \n{same} else {skip}\n'
         else:
-            if self.__visit_properties:
-                self.__functions_prop[self.__prefix] = body
-            else:
-                self.__functions[self.__prefix] = body
-            # skip = 'err==False, {default}, next_state_tx({t_curr_a}, awNext, {t_curr_w}, wNext{global_args_next_state_tx})'.format(
-            #     t_curr_a=self.__t_curr_a, 
-            #     t_curr_w=self.__t_curr_w, 
-            #     default=contract_variables,
-            #     global_args_next_state_tx = (', ' + ', '.join([(g.text + 'Now' if self.__globals_index[g.text]+self.__globals_modifier < 0 else 't_'+g.text + '['+str(self.__globals_index[g.text]+self.__globals_modifier)+']')+', '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else ''
-            # )
-        # if res.format(subs=skip) == res:
-        #     return res + f', {skip}))'
+            same += '\n\tcontract_not_constructed = true;' if self.__prefix == 'constructor' else '\n\tcontract_not_constructed = (true -> pre contract_not_constructed);'
+            skip += '\n\t' + ('contract_not_constructed = false;' if self.__prefix == 'constructor' else 'contract_not_constructed = (true -> pre contract_not_constructed);')
+            self.__functions[self.__prefix] = f'{body} if ({err}) then {same} else {skip}\nfi'
+
+        # if self.__requires:
+        #     req = ' and '.join(self.__requires)
+        #     if self.__visit_properties:
+        #         self.__functions_prop[self.__prefix] = f'if ({req}) then \n{body} \nelse {same}\n'
+        #     else:
+        #         self.__functions[self.__prefix] = f'if ({req}) then \n{body} \nelse {same}\nfi'
         # else:
-        #     return res.format(subs=skip) + '))'
+        #     if self.__visit_properties:
+        #         self.__functions_prop[self.__prefix] = body
+        #     else:
+        #         self.__functions[self.__prefix] = body
         
 
 
@@ -661,7 +670,15 @@ tel
         #     res = res[:res.index('send')+4] + res[res.index('send')+4:].replace(el, 'j')
         
         res = self.send(sender, left)
-        self.__requires.add(send_chk)
+        # self.__requires.add(send_chk)
+        err = 'err' + '_' + str(self.__globals_index['err'])
+        err1 = 'err' + '_' + str(self.__globals_index['err']-1) if self.__globals_index['err'] > 0 else 'false'
+        self.__globals_index['err'] += 1
+        if self.__visit_properties:
+            err1 = err1+'_nx' if err1 != 'false' else err1
+            res = f'(if (not({send_chk})) then {err}_nx=true else {err}_nx={err1}) \n and ' + res
+        else:
+            res = f'if (not({send_chk})) then {err}=true; else {err}={err1}; fi\n' + res
         
         if not self.__visit_properties:
             self.__t_curr_a = [f'aw_{i}_{self.__nesting_aw-1}' for i in range(self.__A+1)]
@@ -679,11 +696,16 @@ tel
 
     # Visit a parse tree produced by TxScriptParser#requireCmd.
     def visitRequireCmd(self, ctx:TxScriptParser.RequireCmdContext):
-        # if self.__prefix == 'constructor':
-        #     return self.visit(ctx.child) + ';'
-        # else:
-        self.__requires.add(f'{self.visit(ctx.child)}')
-        return 'skip'
+        err = 'err' + '_' + str(self.__globals_index['err'])
+        err1 = 'err' + '_' + str(self.__globals_index['err']-1) if self.__globals_index['err'] > 0 else 'false'
+        self.__globals_index['err'] += 1
+        if self.__visit_properties:
+            err1 = err1+'_nx' if err1 != 'false' else err1
+            return f'(if (not({self.visit(ctx.child)})) then {err}_nx=true else {err}_nx={err1})\n'
+        else:
+            return f'if (not({self.visit(ctx.child)})) then {err}=true; else {err}={err1}; fi\n'
+        # self.__requires.add(f'{self.visit(ctx.child)}')
+        # return 'skip'
 
     # Visit a parse tree produced by TxScriptParser#skipCmd.
     def visitSkipCmd(self, ctx:TxScriptParser.SkipCmdContext):
@@ -775,7 +797,7 @@ tel
         ifcmd = ifcmd.format(subs='true')
         # self.__globals_index = backup
         self.__add_last_cmd = backup_add
-        levelling_else_cmds = 'true'
+        levelling_else_cmds = ''
         if self.__nesting_w > backup_nesting_w:
             levelling_else_cmds += f'{self.__t_curr_w}={backup__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
             for ag1 in range(1, self.__A+1):
@@ -794,12 +816,12 @@ tel
                     # levelling_else_cmds += f', t_{g}[{self.__globals_index[g]-1}]=={tg_now}'
             else:
                 if backup_globals[g] < self.__globals_index[g]:
-                    tg_now = f't_{g}[{backup_globals[g]}]' if backup_globals[g] > 0 else f'{g}Now'
-                    levelling_else_cmds += f', t_{g}[{self.__globals_index[g]-1}]=={tg_now}'
+                    tg_now = f'{g}_{backup_globals[g]-1}' # if backup_globals[g] > 0 else f'{g}Now'
+                    levelling_else_cmds += f'{g}_{self.__globals_index[g]-1} = {tg_now}' + (';' if not self.__visit_properties else '')
         if self.__visit_properties:
             return f'(if {cond} then {ifcmd} else {levelling_else_cmds})'
         else:
-            return f'(if ({cond}) then {ifcmd} else {levelling_else_cmds} fi)'
+            return f'if ({cond}) then {ifcmd} else {levelling_else_cmds} fi'
     
 
     # Visit a parse tree produced by TxScriptParser#ifelseCmd.
@@ -1130,7 +1152,7 @@ tel
                 if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                     g_type = 'int'
                 contract_globals += [f'{g_var.text}_nx : {g_type};']
-                contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__M + 1)]  
+                contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__globals_index_max[g_var.text] + (1 if g_var.text != 'err' else 2))]  
         for j in range(2, ntrans+1):
             contract_globals += [f'w_nx{j}: int;']
             contract_globals += [f'w_{i}_nx{j}: int;' for i in range(self.__M + 1)]
@@ -1139,12 +1161,12 @@ tel
             for (g_var,g_type) in self.__globals:
                 if g_type == ('MapAddr', 'int'):
                     contract_globals += [f'{g_var.text}_{ag}_nx{j} : int;' for ag in range(1, self.__A+1)]
-                    contract_globals += [f'{g_var.text}_{ag}_{i}_nx{j} : int;' for i in range(self.__M + 1) for ag in range(1, self.__A+1)]
+                    contract_globals += [f'{g_var.text}_{ag}_{i}_nx{j} : int;' for i in range(self.__globals_index_max[g_var.text]) for ag in range(1, self.__A+1)]
                 else:
                     if g_type == 'Address' or g_type == 'Hash' or g_type == 'Secret':
                         g_type = 'int'
                     contract_globals += [f'{g_var.text}_nx{j} : {g_type};']
-                    contract_globals += [f'{g_var.text}_{i}_nx{j} : {g_type};' for i in range(self.__M + 1)]
+                    contract_globals += [f'{g_var.text}_{i}_nx{j} : {g_type};' for i in range(self.__globals_index_max[g_var.text] + (1 if g_var.text != 'err' else 2))]
             
         next_state_vars = ' '.join(contract_globals)
         implication = 'not(' + self.visit(ctx.where) + ')'
