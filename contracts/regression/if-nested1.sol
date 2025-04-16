@@ -1,21 +1,21 @@
 contract IfNested1 {
-  int x;
+  int val;
 
   constructor() payable {
     require(msg.value>0);
-    x = 0
+    val = 0
   }
 
   function pay(int n) {
     if (n>5) {
-        x = x+1 
+        val = val+1 
     } else {
         if (n<5) {
             skip
         }
         else {
-            //require(x>=1);
-            if (x>=1) {
+            //require(val>=1);
+            if (val>=1) {
               sender.transfer(1)
             }
         }
@@ -30,7 +30,7 @@ property tx1_nonliquid {
       ->
       Exists tx [1, xa]
       [
-        ((<tx>balance[xa] > balance[xa] && <tx>x >= 1))
+        ((<tx>balance[xa] > balance[xa] && <tx>val >= 1))
       ]
     ]
 }
@@ -42,7 +42,7 @@ property tx2_liquid {
       ->
       Exists tx [2, xa]
       [
-        ((<tx>balance[xa] > balance[xa] && <tx>x >= 1))
+        ((<tx>balance[xa] > balance[xa] && <tx>val >= 1))
       ]
     ]
 }

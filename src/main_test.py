@@ -38,14 +38,14 @@ def parse(pattern):
     except Exception as e:
         print(e)
         return
-    try:
-        with open('./out/outputTrace.py', 'w') as file:
-            file.write(visitor.visit(tree))
-        visitor = Kind2Visitor(int(sys.argv[2]), int(sys.argv[3]), False, can_transactions_arrive_any_time, fixed_iteration)
-        with open('./out/outputState.py', 'w') as file:
-            file.write(visitor.visit(tree))
-    except Exception as e:
-        print(str(e))
+    # try:
+    with open('./out/outputTrace.py', 'w') as file:
+        file.write(visitor.visit(tree))
+    visitor = Kind2Visitor(int(sys.argv[2]), int(sys.argv[3]), False, can_transactions_arrive_any_time, fixed_iteration)
+    with open('./out/outputState.py', 'w') as file:
+        file.write(visitor.visit(tree))
+    # except Exception as e:
+    #     print(str(e))
 
 
 def parseFile(file):
@@ -60,7 +60,7 @@ def parseFile(file):
                 pattern = pattern[:pattern.index('}')] + '\nconstructor(){\n\tskip\n}\n' + pattern[pattern.index('}'):]
     pattern = re.sub(r'\.transfer\((.*?)\)', r'!\1', pattern)
     pattern = pattern.replace('<tx> ', '<tx>').replace('<tx>', 'app_tx_st.')
-    pattern = re.sub(r'(contract\s+\w+\s*\{)', lambda match: match.group(1) + ' bool err;', pattern)
+    pattern = re.sub(r'(contract\s+\w+\s*\{)', lambda match: match.group(1) + ' bool err;\nint block_num;\n', pattern)
     parse(pattern)
 
 def main(args):

@@ -83,7 +83,7 @@ class Kind2Visitor(TxScriptVisitor):
         #     self.__proc_args['coinbase'] = None
         
         functions = ','.join([f'{p}' for p in self.__proc if p != 'constructor'])
-        contract_args = ['{a}:{t}'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash']
+        contract_args = ['{a}:{t}'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]).replace('address', 'int') for a in self.__args_map if self.__args_map[a][1] != 'hash']
         contract_args = ';'.join(
             ['xa:int', 'xn:int', 'f:functions'] + 
             contract_args + 
@@ -365,7 +365,7 @@ tel
         if not self.__visit_properties: 
             req1 = '(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')'
             req2 = '(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')'
-            req = f'if (not(xn >= 0 and {req1} and {req2})) then {err}=true; else {err}={err1}, fi\n'
+            req = f'if (not(xn >= 0 and {req1} and {req2})) then {err}=true; else {err}={err1}; fi\n'
             # self.__requires.add('xn >= 0')
             # self.__requires.add('(' + ' or '.join([f'xa = {i}' for i in range(1, self.__A+1)]) + ')')
             # self.__requires.add('(' + ' and '.join([f'(not(xa = {i}) or (starting_aw_{i} -> pre aw_{i}) >= xn)' for i in range(1, self.__A+1)]) + ')')
@@ -663,7 +663,7 @@ tel
             sender= 'xa'
         else:
             if sender in self.__globals_index:
-                sender = sender + 'Now' if self.__globals_index[sender]+self.__globals_modifier < 0 else 't_'+sender + '['+str(self.__globals_index[sender]+self.__globals_modifier)+']'
+                sender = 'starting_'+sender if self.__globals_index[sender]+self.__globals_modifier < 0 else sender + '_'+str(self.__globals_index[sender]+self.__globals_modifier)
             elif sender in self.__args_map:
                 sender = self.__args_map[sender][0]
         # if el:
@@ -797,13 +797,13 @@ tel
         ifcmd = ifcmd.format(subs='true')
         # self.__globals_index = backup
         self.__add_last_cmd = backup_add
-        levelling_else_cmds = ''
+        levelling_else_cmds = []
         if self.__nesting_w > backup_nesting_w:
-            levelling_else_cmds += f'{self.__t_curr_w}={backup__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_else_cmds += [f'{self.__t_curr_w}={backup__t_curr_w}'] #+ (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
             for ag1 in range(1, self.__A+1):
-                levelling_else_cmds += f'{self.__t_curr_a[ag1]} = {backup__t_curr_w[ag1]}' + (' and ' if self.__visit_properties else ';')
-            if self.__visit_properties:
-                levelling_else_cmds = levelling_else_cmds[:-5]
+                levelling_else_cmds += [f'{self.__t_curr_a[ag1]} = {backup__t_curr_a[ag1]}'] # + (' and ' if self.__visit_properties else ';')
+            # if self.__visit_properties:
+            #     levelling_else_cmds = levelling_else_cmds[:-5]
             # levelling_else_cmds += f', {backup__t_curr_w}=={self.__t_curr_w}, And([{backup__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
         for g in self.__globals_index:
             for (gg,gt) in self.__globals:
@@ -811,16 +811,19 @@ tel
                     break
             if gt == ('MapAddr', 'int'):
                 if backup_globals[g] < self.__globals_index[g]:
-                    tg_now = f't_{g}[{backup_globals[g]}]' if backup_globals[g] > 0 else f'{g}Now'
-                    levelling_else_cmds += f', And([t_{g}[{self.__globals_index[g]-1}][j] == {tg_now}[j] for j in range(A+1)])'
+                    for ag in range(1, self.__A+1):
+                        tg_now = f'{g}_{backup_globals[g]}' if backup_globals[g] > 0 else f'starting_{g}_{ag}'
+                        levelling_else_cmds += [f'{g}_{self.__globals_index[g]-1}_{ag} = {tg_now}_{ag}']
                     # levelling_else_cmds += f', t_{g}[{self.__globals_index[g]-1}]=={tg_now}'
             else:
                 if backup_globals[g] < self.__globals_index[g]:
-                    tg_now = f'{g}_{backup_globals[g]-1}' # if backup_globals[g] > 0 else f'{g}Now'
-                    levelling_else_cmds += f'{g}_{self.__globals_index[g]-1} = {tg_now}' + (';' if not self.__visit_properties else '')
+                    tg_now = f'{g}_{backup_globals[g]-1}' if backup_globals[g] > 0 else f'starting_{g}'
+                    levelling_else_cmds += [f'{g}_{self.__globals_index[g]-1} = {tg_now}'] #+ (';' if not self.__visit_properties else '')
         if self.__visit_properties:
+            levelling_else_cmds = ' and '.join(levelling_else_cmds)
             return f'(if {cond} then {ifcmd} else {levelling_else_cmds})'
         else:
+            levelling_else_cmds = '; '.join(levelling_else_cmds) + ';'
             return f'if ({cond}) then {ifcmd} else {levelling_else_cmds} fi'
     
 
@@ -869,14 +872,12 @@ tel
         #     t_curr_w=self.__t_curr_w, 
         #     global_args_next_state_tx = (', ' + ', '.join([(g.text + 'Now' if self.__globals_index[g.text]+self.__globals_modifier < 0 else 't_'+g.text + '['+str(self.__globals_index[g.text]-1+self.__globals_modifier)+']')+', '+g.text+'Next' for (g, _) in self.__globals])) if self.__globals else ''
         # )
-        levelling_if_cmds = ''
-        levelling_else_cmds = ''
+        levelling_if_cmds = []
+        levelling_else_cmds = []
         if if_nesting_w > self.__nesting_w:
-            levelling_else_cmds += f'{if__t_curr_w}={self.__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_else_cmds += [f'{if__t_curr_w}={self.__t_curr_w}'] # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
             for ag1 in range(1, self.__A+1):
-                levelling_else_cmds += f'{if__t_curr_a[ag1]} = {self.__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
-            if self.__visit_properties:
-                levelling_else_cmds = levelling_else_cmds[:-5]
+                levelling_else_cmds += [f'{if__t_curr_a[ag1]} = {self.__t_curr_a[ag1]}']
             self.__t_curr_a = if__t_curr_a
             self.__t_new_a = if__t_new_a
             self.__t_curr_w = if__t_curr_w
@@ -884,34 +885,40 @@ tel
             self.__nesting_w = if_nesting_w
             self.__nesting_aw = if_nesting_aw
         elif if_nesting_w < self.__nesting_w:
-            levelling_if_cmds += f'{self.__t_curr_w} = {if__t_curr_w}' + (' and ' if self.__visit_properties else ';') # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
+            levelling_if_cmds += [f'{self.__t_curr_w} = {if__t_curr_w}'] # And([{if__t_curr_a}[j] == {self.__t_curr_a}[j] for j in range(A+1)])'
             for ag1 in range(1, self.__A+1):
-                levelling_if_cmds += f'{self.__t_curr_a[ag1]} = {if__t_curr_a[ag1]}' + (' and ' if self.__visit_properties else ';')
-            if self.__visit_properties:
-                levelling_if_cmds = levelling_if_cmds[:-5]
+                levelling_if_cmds += [f'{self.__t_curr_a[ag1]} = {if__t_curr_a[ag1]}']
         for g in self.__globals_index:
             for (gg,gt) in self.__globals:
                 if gg.text == g:
                     break 
             if gt == ('MapAddr', 'int'):
                 if if_globals_index[g] > self.__globals_index[g]:
-                    tg_now = f't_{g}[{self.__globals_index[g]}]' if self.__globals_index[g] > 0 else f'{g}Now'
-                    # levelling_else_cmds += f', t_{g}[{if_globals_index[g]-1}]=={tg_now}'
-                    levelling_else_cmds += f', And([t_{g}[{if_globals_index[g]-1}][j] == {tg_now}[j] for j in range(A+1)])'
+                    for ag in range(1, self.__A+1):
+                        tg_now = f'{g}_{self.__globals_index[g]}_{ag}' if self.__globals_index[g] > 0 else f'starting_{g}'
+                        # levelling_else_cmds += f', t_{g}[{if_globals_index[g]-1}]=={tg_now}'
+                        levelling_else_cmds += [f'{g}_{if_globals_index[g]-1}_{ag} = {tg_now}']
                     self.__globals_index[g] = if_globals_index[g]
                 elif if_globals_index[g] < self.__globals_index[g]:
-                    tg_now = f't_{g}[{if_globals_index[g]}]' if if_globals_index[g] > 0 else f'{g}Now'
-                    # levelling_if_cmds += f', {tg_now}==t_{g}[{self.__globals_index[g]-1}]'
-                    levelling_if_cmds += f', And([{tg_now}[j] == t_{g}[{self.__globals_index[g]-1}][j] for j in range(A+1)])'
+                    for ag in range(1, self.__A+1):
+                        tg_now = f'{g}_{if_globals_index[g]}_{ag}' if if_globals_index[g] > 0 else f'starting_{g}'
+                        # levelling_if_cmds += f', {tg_now}==t_{g}[{self.__globals_index[g]-1}]'
+                        levelling_if_cmds += [f'{tg_now}_{ag} = {g}[{self.__globals_index[g]-1}][j] for j in range(A+1)])']
             else:
                 if if_globals_index[g] > self.__globals_index[g]:
-                    tg_now = f't_{g}[{self.__globals_index[g]}]' if self.__globals_index[g] > 0 else f'{g}Now'
-                    levelling_else_cmds += f', t_{g}[{if_globals_index[g]-1}]=={tg_now}'
+                    tg_now = f'{g}_{self.__globals_index[g]}' if self.__globals_index[g] > 0 else f'starting_{g}'
+                    levelling_else_cmds += [f'{g}_{if_globals_index[g]-1}={tg_now}']
                     self.__globals_index[g] = if_globals_index[g]
                 elif if_globals_index[g] < self.__globals_index[g]:
-                    tg_now = f't_{g}[{if_globals_index[g]}]' if if_globals_index[g] > 0 else f'{g}Now'
-                    levelling_if_cmds += f', {tg_now}==t_{g}[{self.__globals_index[g]-1}]'
+                    tg_now = f'{g}_{if_globals_index[g]}' if if_globals_index[g] > 0 else f'starting_{g}'
+                    levelling_if_cmds += [f'{g}_{self.__globals_index[g]-1}={tg_now}']
         self.__add_last_cmd = backup_add
+        if self.__visit_properties:
+            levelling_if_cmds = ' and '.join(levelling_if_cmds)
+            levelling_else_cmds = ' and '.join(levelling_else_cmds)
+        else:
+            levelling_if_cmds = '; '.join(levelling_if_cmds) + ';' if levelling_if_cmds else ''
+            levelling_else_cmds = '; '.join(levelling_else_cmds) + ';' if levelling_else_cmds else ''
         # self.__globals_index = backup
         ifcmd_aux = ifcmd.format(subs=levelling_if_cmds)
         if ifcmd_aux == ifcmd and levelling_if_cmds:
@@ -1134,16 +1141,16 @@ tel
         user_is_legit = ' or '.join([f'xa_tx = {i}' for i in range(1, self.__A+1)])
         ntrans = int(ctx.nTrans.text)
         transition_vars = ''
-        transition_vars += 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
+        transition_vars += 'f_tx: functions; ' + ' '.join(['{a}_tx: {t};'.format(a=self.__args_map[a][0], t=self.__args_map[a][1]).replace('address', 'int') for a in self.__args_map if self.__args_map[a][1] != 'hash'])
         transition_vars += ' xn_tx: int;'
         for i in range(2, ntrans+1):
             transition_vars += f'f_tx{i}: functions; ' + ' '.join(['{a}_tx{i}: {t};'.format(i=i, a=self.__args_map[a][0], t=self.__args_map[a][1]) for a in self.__args_map if self.__args_map[a][1] != 'hash'])
             transition_vars += f' xn_tx{i}: int;'
         contract_globals = []
         contract_globals += ['w_nx: int;']
-        contract_globals += [f'w_{i}_nx: int;' for i in range(self.__M + 1)]
+        contract_globals += [f'w_{i}_nx: int;' for i in range(self.__max_nesting + 1)]
         contract_globals += [f'aw_{ag}_nx: int;' for ag in range(1, self.__A+1)]
-        contract_globals += [f'aw_{ag}_{i}_nx: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
+        contract_globals += [f'aw_{ag}_{i}_nx: int;' for ag in range(1, self.__A+1) for i in range(self.__max_nesting + 1)]
         for (g_var,g_type) in self.__globals:
             if g_type == ('MapAddr', 'int'):
                 contract_globals += [f'{g_var.text}_{ag}_nx : int;' for ag in range(1, self.__A+1)]
@@ -1155,9 +1162,9 @@ tel
                 contract_globals += [f'{g_var.text}_{i}_nx : {g_type};' for i in range(self.__globals_index_max[g_var.text] + (1 if g_var.text != 'err' else 2))]  
         for j in range(2, ntrans+1):
             contract_globals += [f'w_nx{j}: int;']
-            contract_globals += [f'w_{i}_nx{j}: int;' for i in range(self.__M + 1)]
+            contract_globals += [f'w_{i}_nx{j}: int;' for i in range(self.__max_nesting + 1)]
             contract_globals += [f'aw_{ag}_nx{j}: int;' for ag in range(1, self.__A+1)]
-            contract_globals += [f'aw_{ag}_{i}_nx{j}: int;' for ag in range(1, self.__A+1) for i in range(self.__M + 1)]
+            contract_globals += [f'aw_{ag}_{i}_nx{j}: int;' for ag in range(1, self.__A+1) for i in range(self.__max_nesting + 1)]
             for (g_var,g_type) in self.__globals:
                 if g_type == ('MapAddr', 'int'):
                     contract_globals += [f'{g_var.text}_{ag}_nx{j} : int;' for ag in range(1, self.__A+1)]
@@ -1221,7 +1228,11 @@ tel
                 pattern = re.escape(substring) + r'(?!_)'
                 aux = re.sub(pattern, replacement, aux)
             for k in self.__globals_index:
-                pattern = re.escape(k) + r'(?!_)'
+                pattern = r'(?<!starting_)' + re.escape(k) + r'(?!_)'
+                aux = re.sub(pattern, f'{k}{nx}', aux)
+            for k in range(0, 100):
+                k = '_' + str(k)
+                pattern = r'(?<!starting_)' + re.escape(k) + r'(?!_)'
                 aux = re.sub(pattern, f'{k}{nx}', aux)
             for j in range(1, self.__A+1):
                 pattern = re.escape(f'aw_{j}') + r'(?!_)'
@@ -1349,8 +1360,9 @@ forall (xa_tx: int;)
                 return 'w' + i
             if 'block.number' in name:
                 return 'block_num' + i
-            if 'tx.msg.value' in name:
-                return 'xn'+f'_q{self.__n_transactions-1-(self.__n_transactions-self.__pi)}'
+            if 'msg.value' in name:
+                return 'xn_tx'
+                # return 'xn_'+f'{self.__n_transactions-1-(self.__n_transactions-self.__pi)}_tx'
             # if 'tx.msg.sender' in name:
             #     return 'tx_sender'
             if ctx.v.text == 'msg.sender' or ctx.v.text == 'sender' or ctx.v.text == 'xa':

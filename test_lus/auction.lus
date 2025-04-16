@@ -1,0 +1,1111 @@
+
+type functions = enum { dummy, bid_func,close_func };
+node auction (xa:int;xn:int;f:functions;constructor_b:int;constructor_d:int;constructor_m:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_err : bool = false;
+const starting_block_num : int = 0;
+const starting_deadline : int = 0;
+const starting_min_bid : int = 0;
+const starting_seller : int = 0;
+const starting_winner : int = 0;
+const starting_current_bid : int = 0;
+const starting_closed : bool = false;
+var w: int;
+var w_0: int;
+var w_1: int;
+var aw_1: int;
+var aw_2: int;
+var aw_1_0: int;
+var aw_1_1: int;
+var aw_2_0: int;
+var aw_2_1: int;
+var err : bool;
+var err_0 : bool;
+var err_1 : bool;
+var err_2 : bool;
+var err_3 : bool;
+var err_4 : bool;
+var block_num : int;
+var deadline : int;
+var deadline_0 : int;
+var min_bid : int;
+var min_bid_0 : int;
+var seller : int;
+var seller_0 : int;
+var winner : int;
+var winner_0 : int;
+var current_bid : int;
+var current_bid_0 : int;
+var closed : bool;
+var closed_0 : bool;
+let
+    if (true -> pre contract_not_constructed) then
+
+seller_0 = constructor_b;
+deadline_0 = constructor_d;
+min_bid_0 = constructor_m;
+closed_0 = false; if (false) then 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = (starting_closed -> pre closed);
+	
+	contract_not_constructed = true; else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	block_num = (starting_block_num -> pre block_num);
+	deadline = deadline_0;
+	min_bid = min_bid_0;
+	seller = seller_0;
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = closed_0;
+	
+	contract_not_constructed = false;
+fi
+elsif f = bid_func then
+	if (not(xn >= 0 and (xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)))) then err_0=true; else err_0=false; fi
+w_0 = (starting_w -> pre w) + xn;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) - xn;
+fi
+
+if (not(not((starting_closed -> pre closed)))) then err_1=true; else err_1=err_0; fi
+
+if (not(xn>=(starting_min_bid -> pre min_bid))) then err_2=true; else err_2=err_1; fi
+
+if (not(xn>(starting_current_bid -> pre current_bid))) then err_3=true; else err_3=err_2; fi
+
+if (not((starting_current_bid -> pre current_bid) >= 0 and (starting_current_bid -> pre current_bid) <= (starting_w -> pre w))) then err_4=true; else err_4=err_3; fi
+w_1 = w_0 - (starting_current_bid -> pre current_bid);
+if ((starting_winner -> pre winner) = 1) then
+	aw_1_1 = aw_1_0 + (starting_current_bid -> pre current_bid);
+	aw_2_1 = aw_2_0;
+else
+	aw_1_1 = aw_1_0;
+	aw_2_1 = aw_2_0 + (starting_current_bid -> pre current_bid);
+fi
+
+winner_0 = xa;
+current_bid_0 = xn; if (err_4) then 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = (starting_closed -> pre closed);
+	
+	contract_not_constructed = (true -> pre contract_not_constructed); else 
+	w = w_1;
+	aw_1 = aw_1_1;
+	aw_2 = aw_2_1;
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = winner_0;
+	current_bid = current_bid_0;
+	closed = (starting_closed -> pre closed);
+	
+	contract_not_constructed = (true -> pre contract_not_constructed);
+fi
+	elsif f = close_func then
+	
+if (not(not((starting_closed -> pre closed)))) then err_0=true; else err_0=false; fi
+
+if (not(xa = (starting_seller -> pre seller))) then err_1=true; else err_1=err_0; fi
+
+if (not(block_num>(starting_deadline -> pre deadline))) then err_2=true; else err_2=err_1; fi
+
+closed_0 = true;
+if (not((starting_w -> pre w) >= 0 and (starting_w -> pre w) <= (starting_w -> pre w))) then err_3=true; else err_3=err_2; fi
+w_0 = (starting_w -> pre w) - (starting_w -> pre w);
+if ((starting_seller -> pre seller) = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) + (starting_w -> pre w);
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) + (starting_w -> pre w);
+fi
+ if (err_3) then 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = (starting_closed -> pre closed);
+	
+	contract_not_constructed = (true -> pre contract_not_constructed); else 
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = closed_0;
+	
+	contract_not_constructed = (true -> pre contract_not_constructed);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	err = (starting_err -> pre err);
+	block_num = (starting_block_num -> pre block_num);
+	deadline = (starting_deadline -> pre deadline);
+	min_bid = (starting_min_bid -> pre min_bid);
+	seller = (starting_seller -> pre seller);
+	winner = (starting_winner -> pre winner);
+	current_bid = (starting_current_bid -> pre current_bid);
+	closed = (starting_closed -> pre closed);
+	
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not((((not(winner=0) and w>0) and block_num>deadline) and not(closed))) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or (aw_1_nx>=(aw_1+current_bid) and current_bid>=0)) and (not(xa_tx = 2) or (aw_2_nx>=(aw_2+current_bid) and current_bid>=0))
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not((not(winner=0) and not(closed))) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+current_bid)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+current_bid))
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not((((not(winner=0) and w>0) and block_num>deadline) and not(closed))) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or (aw_1_nx>=(aw_1+current_bid) and current_bid>=min_bid)) and (not(xa_tx = 2) or (aw_2_nx>=(aw_2+current_bid) and current_bid>=min_bid))
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(((not(winner=0) and w>0) and closed = false)) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx>aw_1) and (not(xa_tx = 2) or aw_2_nx>aw_2)
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(((not(winner=0) and w>0) and block_num>deadline)) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx>aw_1) and (not(xa_tx = 2) or aw_2_nx>aw_2)
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(block_num>deadline) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx>aw_1) and (not(xa_tx = 2) or aw_2_nx>aw_2)
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(not(winner=0)) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or (not(xa_tx=seller) and aw_1_nx>aw_1)) and (not(xa_tx = 2) or (not(xa_tx=seller) and aw_2_nx>aw_2))
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+--%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(closed) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; constructor_b_tx: int; constructor_d_tx: int; constructor_m_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; w_1_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_1_1_nx: int; aw_2_0_nx: int; aw_2_1_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; err_4_nx : bool; err_5_nx : bool; err_6_nx : bool; block_num_nx : int; block_num_0_nx : int; deadline_nx : int; deadline_0_nx : int; deadline_1_nx : int; min_bid_nx : int; min_bid_0_nx : int; min_bid_1_nx : int; seller_nx : int; seller_0_nx : int; seller_1_nx : int; winner_nx : int; winner_0_nx : int; winner_1_nx : int; current_bid_nx : int; current_bid_0_nx : int; current_bid_1_nx : int; closed_nx : bool; closed_0_nx : bool; closed_1_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx>=(aw_1+w)) and (not(xa_tx = 2) or aw_2_nx>=(aw_2+w))
+        )
+        and
+        (
+        (if f_tx = bid_func then
+	(if (not(xn_tx >= 0 and (xa_tx = 1 or xa_tx = 2) and ((not(xa_tx = 1) or aw_1 >= xn_tx) and (not(xa_tx = 2) or aw_2 >= xn_tx)))) then err_0_nx=true else err_0_nx=false)
+ and (w_0_nx = w + xn_tx and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 - xn_tx and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 - xn_tx
+) and 
+(if (not(not(closed))) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(xn_tx>=min_bid)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and (if (not(xn_tx>current_bid)) then err_3_nx=true else err_3_nx=err_2_nx)
+ and ((if (not(current_bid >= 0 and current_bid <= w)) then err_4_nx=true else err_4_nx=err_3_nx) 
+ and w_1_nx = w_0_nx - current_bid and
+if (starting_winner = 1) then
+	aw_1_1_nx = aw_1_0_nx + current_bid and
+	aw_2_1_nx = aw_2_0_nx
+else
+	aw_1_1_nx = aw_1_0_nx and
+	aw_2_1_nx = aw_2_0_nx + current_bid
+) and winner_0_nx = xa_tx and current_bid_0_nx = xn_tx and if (err_4_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_1_nx and 
+	aw_1_nx = aw_1_1_nx
+	 and aw_2_nx = aw_2_1_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_0_nx
+	 and current_bid_nx = current_bid_0_nx
+	 and closed_nx = closed_nx and 
+	true
+
+	else if f_tx = close_func then
+	
+(if (not(not(closed))) then err_0_nx=true else err_0_nx=false)
+ and (if (not(xa_tx = seller)) then err_1_nx=true else err_1_nx=err_0_nx)
+ and (if (not(block_num>deadline)) then err_2_nx=true else err_2_nx=err_1_nx)
+ and closed_0_nx = true and ((if (not(w >= 0 and w <= w)) then err_3_nx=true else err_3_nx=err_2_nx) 
+ and w_0_nx = w - w and
+if (starting_seller = 1) then
+	aw_1_0_nx = aw_1 + w and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + w
+) and if (err_3_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	block_num_nx = block_num_nx
+	 and deadline_nx = deadline_nx
+	 and min_bid_nx = min_bid_nx
+	 and seller_nx = seller_nx
+	 and winner_nx = winner_nx
+	 and current_bid_nx = current_bid_nx
+	 and closed_nx = closed_0_nx and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err
+	 and block_num_nx = block_num
+	 and deadline_nx = deadline
+	 and min_bid_nx = min_bid
+	 and seller_nx = seller
+	 and winner_nx = winner
+	 and current_bid_nx = current_bid
+	 and closed_nx = closed and 
+	true
+)
+        )
+    );
+
+tel
+        

@@ -1,0 +1,127 @@
+
+type functions = enum { dummy, pay_func };
+node ifwithoutelse (xa:int;xn:int;f:functions;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_err : bool = false;
+var w: int;
+var w_0: int;
+var aw_1: int;
+var aw_2: int;
+var aw_1_0: int;
+var aw_2_0: int;
+var err : bool;
+var err_0 : bool;
+var err_1 : bool;
+let
+    if (true -> pre contract_not_constructed) then
+if (not(xn >= 0 and (xa = 1 or xa = 2) and ((not(xa = 1) or (starting_aw_1 -> pre aw_1) >= xn) and (not(xa = 2) or (starting_aw_2 -> pre aw_2) >= xn)))) then err_0=true; else err_0=false; fi
+w_0 = (starting_w -> pre w) + xn;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) - xn;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) - xn;
+fi
+
+if (not(xn>0)) then err_1=true; else err_1=err_0; fi
+ if (err_1) then 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	
+	contract_not_constructed = true; else 
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	
+	
+	contract_not_constructed = false;
+fi
+elsif f = pay_func then
+	
+if (false) then if (not(1 >= 0 and 1 <= (starting_w -> pre w))) then err_0=true; else err_0=false; fi
+w_0 = (starting_w -> pre w) - 1;
+if (xa = 1) then
+	aw_1_0 = (starting_aw_1 -> pre aw_1) + 1;
+	aw_2_0 = (starting_aw_2 -> pre aw_2);
+else
+	aw_1_0 = (starting_aw_1 -> pre aw_1);
+	aw_2_0 = (starting_aw_2 -> pre aw_2) + 1;
+fi
+ else w_0=(starting_w -> pre w); aw_1_0 = (starting_aw_1 -> pre aw_1); aw_2_0 = (starting_aw_2 -> pre aw_2); err_0 = starting_err; fi if (err_0) then 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed); else 
+	w = w_0;
+	aw_1 = aw_1_0;
+	aw_2 = aw_2_0;
+	
+	
+	contract_not_constructed = (true -> pre contract_not_constructed);
+fi
+else
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+	err = (starting_err -> pre err);
+	
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    (not (xa_tx = 1 or xa_tx = 2) or not(w>0) or (contract_not_constructed)) /* user is legit*/
+    or
+    exists (
+            f_tx: functions;  xn_tx: int;  /* Transition vars */
+            w_nx: int; w_0_nx: int; aw_1_nx: int; aw_2_nx: int; aw_1_0_nx: int; aw_2_0_nx: int; err_nx : bool; err_0_nx : bool; err_1_nx : bool; err_2_nx : bool; err_3_nx : bool; /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx>aw_1) and (not(xa_tx = 2) or aw_2_nx>aw_2)
+        )
+        and
+        (
+        (if f_tx = pay_func then
+	
+(if false then ((if (not(1 >= 0 and 1 <= w)) then err_0_nx=true else err_0_nx=false) 
+ and w_0_nx = w - 1 and
+if (xa_tx = 1) then
+	aw_1_0_nx = aw_1 + 1 and
+	aw_2_0_nx = aw_2
+else
+	aw_1_0_nx = aw_1 and
+	aw_2_0_nx = aw_2 + 1
+) else w_0_nx=w and aw_1_0_nx = aw_1 and aw_2_0_nx = aw_2 and err_0 = starting_err) and if (err_0_nx) then 
+
+	w_nx = w and 
+	aw_1_nx = aw_1
+	 and aw_2_nx = aw_2 and 
+	true and 
+	true else  
+	w_nx = w_0_nx and 
+	aw_1_nx = aw_1_0_nx
+	 and aw_2_nx = aw_2_0_nx and 
+	true and 
+	true
+
+else
+	w_nx = w  and 
+	aw_1_nx = aw_1
+	and aw_2_nx = aw_2 and 
+	err_nx = err and 
+	true
+)
+        )
+    );
+
+tel
+        
