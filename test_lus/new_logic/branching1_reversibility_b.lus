@@ -1,0 +1,118 @@
+
+type functions = enum { dummy, f_func, g_func };
+type address = enum { a1, a2 };
+node C (xa:address ; xn:int;f:functions;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_v : int = 0;
+const starting_err : bool = false;
+var w: int;
+var aw_1: int;
+var aw_2: int;
+var v: int;
+var err : bool;
+let
+    if (true -> pre contract_not_constructed) then
+		v = 0;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = false;
+		err = false;
+	elsif f = f_func then
+		v = 1;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	elsif f = g_func then
+		v = 2;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	else
+		v = (starting_v -> pre v);
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	fi
+--%PROPERTY 
+	not (v = 1 or v = 2) 
+	or
+	(forall (a_tx: address;)
+		(not (a_tx = a1 or a_tx = a2) or (contract_not_constructed)) /* user is legit*/
+		or
+		forall (
+				h1_tx1: functions;  /* forall h1 : method .  */
+		)
+		exists(
+				w_nx1: int; aw_1_nx1: int; aw_2_nx1: int;  err_nx1 : bool; v_nx1 : int; /* Next state vars */
+		)
+		exists (
+				h2_tx11: functions;  /* exists h2 : method .  */
+		)
+		exists (
+				w_nx11: int; aw_1_nx11: int; aw_2_nx11: int;  err_nx11 : bool; v_nx11 : int; /* Next state vars */
+		)		
+		(
+			(   /* condition */
+				(v_nx11 = v)
+			)
+		and
+	/* execute <a:C.h1()$0> */
+	(
+	if h1_tx1 = f_func then
+		v_nx1 = 1  and 
+		w_nx1 = w and
+		aw_1_nx1 = aw_1 and 
+		aw_2_nx1 = aw_2 and 
+		err_nx1 = false
+	else if h1_tx1 = g_func then
+		v_nx1 = 2 and
+		w_nx1 = w and
+		aw_1_nx1 = aw_1 and 
+		aw_2_nx1 = aw_2 and 
+		err_nx1 = false
+	else
+		v_nx1 = v  and
+		w_nx1 = w and
+		aw_1_nx1 = aw_1 and 
+		aw_2_nx1 = aw_2 and 
+		err_nx1 = false
+	)
+	and
+	/* execute <a:C.h2()$0> */
+	(
+	if h2_tx11 = f_func then
+		v_nx11 = 1 and
+		w_nx11 = w_nx1 and
+		aw_1_nx11 = aw_1_nx1 and 
+		aw_2_nx11 = aw_2_nx1 and 
+		err_nx11 = false
+	else if h2_tx11 = g_func then
+		v_nx11 = 2 and
+		w_nx11 = w_nx1 and
+		aw_1_nx11 = aw_1_nx1 and 
+		aw_2_nx11 = aw_2_nx1 and 
+		err_nx11 = false
+	else
+		v_nx11 = v_nx1 and
+		w_nx11 = w_nx1 and
+		aw_1_nx11 = aw_1_nx1 and 
+		aw_2_nx11 = aw_2_nx1 and 
+		err_nx11 = false 
+	)
+	)
+);
+
+tel
+        

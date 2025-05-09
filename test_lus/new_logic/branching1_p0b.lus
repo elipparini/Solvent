@@ -1,0 +1,84 @@
+
+type functions = enum { dummy, f_func, g_func };
+type address = enum { a1, a2 };
+node C (xa:address ; xn:int;f:functions;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var contract_not_constructed: bool;
+const starting_v : int = 0;
+const starting_err : bool = false;
+var w: int;
+var aw_1: int;
+var aw_2: int;
+var v: int;
+var err : bool;
+let
+    if (true -> pre contract_not_constructed) then
+		v = 0;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = false;
+		err = false;
+	elsif f = f_func then
+		v = 1;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	elsif f = g_func then
+		v = 2;
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	else
+		v = (starting_v -> pre v);
+		w = (starting_w -> pre w);
+		aw_1 = (starting_aw_1 -> pre aw_1);
+		aw_2 = (starting_aw_2 -> pre aw_2);
+		contract_not_constructed = (true -> pre contract_not_constructed);
+		err = false;
+	fi
+--%PROPERTY 
+	(forall (a_tx: address;)
+		(not (a_tx = a1 or a_tx = a2) or (contract_not_constructed)) /* user is legit*/
+		or
+		exists (
+				/* exists args : calldataargs . */
+				h_tx: functions;  /* exists h : method .  */
+				w_nx: int; aw_1_nx: int; aw_2_nx: int;  err_nx : bool; v_nx : int; /* Next state vars */
+		)
+		(
+			(   /* condition */
+				(v_nx = 3)
+			)
+		and
+	if h_tx = f_func then
+		v_nx = 1 and
+		w_nx =  w and 
+		aw_1_nx =  aw_1 and
+		aw_2_nx = aw_2 and
+		err_nx = false
+	else if h_tx = g_func then
+		v_nx = 2 and
+		w_nx =  w and 
+		aw_1_nx =  aw_1 and
+		aw_2_nx = aw_2 and
+		err_nx = false
+	else
+		v_nx = v and
+		w_nx =  w and 
+		aw_1_nx =  aw_1 and
+		aw_2_nx = aw_2 and
+		err_nx = false
+)
+);
+
+tel
+        
