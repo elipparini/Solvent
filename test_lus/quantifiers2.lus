@@ -1,0 +1,59 @@
+
+type functions = enum { dummy, pippo_func };
+node quantifiers (xa:int;xn:int;f:functions; n:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var w: int;
+var aw_1: int;
+var aw_2: int;
+let
+    if f = pippo_func and (xa = 1 or xa = 2) and (n > 3 or xn < 7) then 
+		w = 0;
+		if (xa = 1) then
+			aw_1 = (starting_aw_1 -> pre aw_1) + (starting_w -> pre w);
+			aw_2 = (starting_aw_2 -> pre aw_2);
+		else
+			aw_1 = (starting_aw_1 -> pre aw_1);
+			aw_2 = (starting_aw_2 -> pre aw_2) + (starting_w -> pre w);
+		fi
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+    --%PROPERTY 
+forall (xa_tx: int;)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+	exists(xn_tx: int;)
+	forall(n_tx: int; )
+    exists (
+            f_tx: functions;   /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int;  /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+w)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+w))
+        )
+        and
+        (
+    if f_tx = pippo_func and (xa_tx = 1 or xa_tx = 2) and (n_tx > 3 or xn_tx < 7) then 
+		(w_nx = 0 and
+		if (xa_tx = 1) then
+			(aw_1_nx = aw_1 +  w and
+			aw_2_nx = aw_2)
+		else
+			(aw_1_nx = aw_1 and
+			aw_2_nx = aw_2 + w)
+		)
+else 
+	w_nx = w and 
+	aw_1_nx =  aw_1 and
+	aw_2_nx = aw_2      )
+    );
+
+tel
+        

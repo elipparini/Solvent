@@ -1,0 +1,43 @@
+
+
+STATE 0
+	balance = 2
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
+
+
+TRANSACTION 0 => 1
+	msg.sender = 0
+	msg.value = 0
+
+
+STATE 1
+	a = 0
+	b = 0
+	balance = 2
+	block.number = 0
+	c = 0
+	err = false
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
+
+
+TRANSACTION 1 => 2
+	f = pay
+	msg.sender = 1
+	msg.value = 0
+	pay_amount = 1
+
+
+STATE 2
+	a = 1
+	b = 1
+	balance = 1
+	block.number = 0
+	c = 0
+	err = false
+	user_balance[0] = 0
+	user_balance[1] = 1
+	user_balance[2] = 0

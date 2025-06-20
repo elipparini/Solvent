@@ -1,0 +1,22 @@
+
+
+STATE 0
+	balance = 1
+	user_balance[0] = 1000
+	user_balance[1] = 1000
+	user_balance[2] = 1000
+
+
+TRANSACTION 0 => 1
+	msg.sender = 0
+	msg.value = 0
+
+
+STATE 1
+	balance = 1
+	block.number = 0
+	err = false
+	lock = true
+	user_balance[0] = 1000
+	user_balance[1] = 1000
+	user_balance[2] = 1000

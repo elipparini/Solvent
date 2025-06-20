@@ -29,7 +29,7 @@ property p0a_true {
     forall a: address.
     exists h: method.
     exists args : calldataargs. // superfluous?
-        <a:C.f()$0> 
+        <a:C.h()$0> 
             C.v==1
 }
 

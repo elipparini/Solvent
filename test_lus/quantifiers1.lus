@@ -1,0 +1,151 @@
+
+type functions = enum { dummy, pippo_func };
+node quantifiers (xa:int;xn:int;f:functions; n:int;starting_w: int;starting_aw_1: int;starting_aw_2: int) returns();
+(*@contract
+    assume starting_w >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+var w: int;
+var aw_1: int;
+var aw_2: int;
+let
+    if f = pippo_func and (xa = 1 or xa = 2) and n > 3 and xn < 7 then 
+		w = (starting_w -> pre w) - 1;
+		if (xa = 1) then
+			aw_1 = (starting_aw_1 -> pre aw_1) + 1;
+			aw_2 = (starting_aw_2 -> pre aw_2);
+		else
+			aw_1 = (starting_aw_1 -> pre aw_1);
+			aw_2 = (starting_aw_2 -> pre aw_2) + 1;
+		fi
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+    --%PROPERTY /* Forall - Exists */
+forall (xa_tx: int;)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; n_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int;  /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+1)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+1))
+        )
+        and
+        (
+    if f_tx = pippo_func and (xa_tx = 1 or xa_tx = 2) and n_tx = 3 then 
+		(w_nx = 0 and
+		if (xa_tx = 1) then
+			(aw_1_nx = aw_1 +  1 and
+			aw_2_nx = aw_2)
+		else
+			(aw_1_nx = aw_1 and
+			aw_2_nx = aw_2 + 1)
+		)
+else 
+	w_nx = w and 
+	aw_1_nx =  aw_1 and
+	aw_2_nx = aw_2      )
+    );
+
+
+    --%PROPERTY  /* Forall - Forall */
+forall (xa_tx: int; n_tx: int)
+    not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    or
+    exists (
+            f_tx: functions; xn_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int;  /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+1)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+1))
+        )
+        and
+        (
+    if f_tx = pippo_func and (xa_tx = 1 or xa_tx = 2) and n_tx = 3 then 
+		(w_nx = 0 and
+		if (xa_tx = 1) then
+			(aw_1_nx = aw_1 +  1 and
+			aw_2_nx = aw_2)
+		else
+			(aw_1_nx = aw_1 and
+			aw_2_nx = aw_2 + 1)
+		)
+else 
+	w_nx = w and 
+	aw_1_nx =  aw_1 and
+	aw_2_nx = aw_2      )
+    );
+
+
+    --%PROPERTY /* Exists - Exists */
+exists (xa_tx: int;)
+    (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    and
+    exists (
+            f_tx: functions; n_tx: int; xn_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int;  /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+1)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+1))
+        )
+        and
+        (
+    if f_tx = pippo_func and (xa_tx = 1 or xa_tx = 2) and n_tx = 3 then 
+		(w_nx = 0 and
+		if (xa_tx = 1) then
+			(aw_1_nx = aw_1 +  1 and
+			aw_2_nx = aw_2)
+		else
+			(aw_1_nx = aw_1 and
+			aw_2_nx = aw_2 + 1)
+		)
+else 
+	w_nx = w and 
+	aw_1_nx =  aw_1 and
+	aw_2_nx = aw_2      )
+    );
+
+
+
+
+    --%PROPERTY /* Exists - Forall */
+exists (xa_tx: int;)
+    (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+    and
+	forall ( n_tx: int;)
+    exists (
+            f_tx: functions; xn_tx: int;  /* Transition vars */
+            w_nx: int; aw_1_nx: int; aw_2_nx: int;  /* Next state vars */
+    )
+    (
+        (   /* condition */
+            (not(xa_tx = 1) or aw_1_nx = (aw_1+1)) and (not(xa_tx = 2) or aw_2_nx = (aw_2+1))
+        )
+        and
+        (
+    if f_tx = pippo_func and (xa_tx = 1 or xa_tx = 2) and n_tx = 3 then 
+		(w_nx = 0 and
+		if (xa_tx = 1) then
+			(aw_1_nx = aw_1 +  1 and
+			aw_2_nx = aw_2)
+		else
+			(aw_1_nx = aw_1 and
+			aw_2_nx = aw_2 + 1)
+		)
+else 
+	w_nx = w and 
+	aw_1_nx =  aw_1 and
+	aw_2_nx = aw_2      )
+    );
+
+
+tel
+        

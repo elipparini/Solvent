@@ -52,6 +52,8 @@ property seller_wd_liquid {
     ]
 }
 
+
+// Shouldn't this be false?? Maybe xa has not enough balance to outbid current_bid
 // the old winner can withdraw the current bid
 property old_winner_wd_liquid {
     Forall xa
@@ -117,6 +119,7 @@ property seller_wd_nowinner_nonliquid {
     ]
 }
 
+// No need to add "xa != seller" (we are already saying "forall xa")
 // the close transaction can be fired by someone who is not the seller (should be false) 
 property nonseller_wd_nonliquid {
     Forall xa

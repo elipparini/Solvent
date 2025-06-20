@@ -1,0 +1,111 @@
+/*
+Addresses:
+C : C
+D : D
+user_1 : u1
+user_2 : u2
+*/
+
+type address = enum { C, D, u1, u2 };
+
+type balance_functions = enum { transfer, read };
+type C_functions = enum { dummy, f_func };
+
+node balance(
+    f:balance_functions; 
+    starting_wC: int; 
+    starting_wD: int; 
+    starting_aw_1: int;
+    starting_aw_2: int;
+    sender: address;
+    receiver: address;
+    amount: int;
+    )
+     returns(
+        wC: int;
+        wD: int;
+        aw_1: int;
+        aw_2: int;);
+(*@contract
+    assume starting_wC >= 0;
+    assume starting_wD >= 0;
+    assume starting_aw_1 >= 0;
+assume starting_aw_2 >= 0;
+*)
+
+var wC_0: int;
+var wD_0: int;
+var aw_1_0: int;
+var aw_2_0: int;
+let 
+if f = transfer then
+    if sender = C then
+        wC_0 = (starting_wC -> pre wC) - amount;
+        wD_0 = (starting_wC -> pre wD);
+        aw_1_0 = (starting_aw_1 -> pre aw_1);
+        aw_2_0 = (starting_aw_2-> pre aw_2);
+    elsif sender = D then
+        wC_0 = (starting_wC -> pre wC);
+        wD_0 = (starting_wC -> pre wD) - amount;
+        aw_1_0 = (starting_aw_1 -> pre aw_1);
+        aw_2_0 = (starting_aw_2-> pre aw_2); 
+    elsif sender = D then
+        wC_0 = (starting_wC -> pre wC);
+        wD_0 = (starting_wC -> pre wD);
+        aw_1_0 = (starting_aw_1 -> pre aw_1) - amount;
+        aw_2_0 = (starting_aw_2-> pre aw_2);
+    else
+        wC_0 = (starting_wC -> pre wC);
+        wD_0 = (starting_wC -> pre wD);
+        aw_1_0 = (starting_aw_1 -> pre aw_1);
+        aw_2_0 = (starting_aw_2-> pre aw_2) - amount;
+    fi
+    if receiver = C then
+        wC = wC_0 + amount;
+        wD = wD_0;
+        aw_1 = aw_1_0;
+        aw_2 = aw_2_0;
+    elsif receiver = D then
+        wC = wC_0;
+        wD = wD_0 + amount;
+        aw_1 = aw_1_0;
+        aw_2 = aw_2_0;
+    elsif receiver = D then
+        wC = wC_0;
+        wD = wD_0;
+        aw_1 = aw_1_0 + amount;
+        aw_2 = aw_2_0;
+    else
+        wC = wC_0;
+        wD = wD_0;
+        aw_1 = aw_1_0;
+        aw_2 = aw_2_0 + amount; 
+    fi
+else /* f = read , or dummy*/
+    wC = starting_wC -> pre wC;
+    wD = starting_wC -> pre wD;
+    aw_1 = starting_aw_1 -> pre aw_1;
+    aw_2 = starting_aw_2-> pre aw_2;
+fi
+tel
+
+
+node c2c_C (xa:int;xn:int;f:C_functions; ) returns();
+let
+    if f = f_func and (xa = 1 or xa = 2) and then 
+		w = (starting_w -> pre w) - 1;
+		if (xa = 1) then
+			aw_1 = (starting_aw_1 -> pre aw_1) + 1;
+			aw_2 = (starting_aw_2 -> pre aw_2);
+		else
+			aw_1 = (starting_aw_1 -> pre aw_1);
+			aw_2 = (starting_aw_2 -> pre aw_2) + 1;
+		fi
+else 
+	w = (starting_w -> pre w);
+	aw_1 = (starting_aw_1 -> pre aw_1);
+	aw_2 = (starting_aw_2 -> pre aw_2);
+fi
+
+tel
+        

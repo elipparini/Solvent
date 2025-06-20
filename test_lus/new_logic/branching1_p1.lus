@@ -60,7 +60,7 @@ let
 			and
 			/* execute <a:C.f()$0>  */
 			(
-			/* we are in the case g_func" */
+			/* we are in the case f_func" */
 				v_nx1 = 1 and
 				w_nx1 = w and
 				aw_1_nx1 = aw_1 and 
@@ -81,10 +81,10 @@ let
 			(
 			/* we are in the case g_func" */
 				v_nx2 = 2 and
-				w_nx1 = w and
-				aw_1_nx1 = aw_1 and 
-				aw_2_nx1 = aw_2 and 
-				err_nx1 = false
+				w_nx2 = w and
+				aw_1_nx2 = aw_1 and 
+				aw_2_nx2 = aw_2 and 
+				err_nx2 = false
 			)
 		)
 	)

@@ -1,0 +1,324 @@
+/* N user = 2*/
+
+
+type address = enum { Blacklist, U1, U2 };
+
+type balance_functions = enum { transfer, read };
+type blacklist_functions = enum { dummy, receive, pay };
+
+node balance(
+    f:balance_functions; 
+    starting_w_Blacklist: int; 
+    starting_w_U1: int;
+    starting_w_U2: int;
+    sender: address;
+    receiver: address;
+    amount: int;
+    )
+     returns(
+        w_Blacklist: int;
+        w_U1: int;
+        w_U2: int;
+        reverted: bool;
+        );
+(*@contract
+    assume starting_w_Blacklist >= 0;
+    assume starting_w_U1 >= 0;
+    assume starting_w_U2 >= 0;
+*)
+
+var w_Blacklist_0: int;
+var w_U1_0: int;
+var w_U2_0: int;
+let 
+if f = transfer then
+    if amount <= 0 then
+        w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+        w_U1_0 = (starting_w_U1 -> pre w_U1);
+        w_U2_0 = (starting_w_U2-> pre w_U2);
+        reverted = true;
+    elsif sender = Blacklist then
+        if (starting_w_Blacklist -> pre w_Blacklist) >= amount then
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist) - amount;
+            w_U1_0 = (starting_w_U1 -> pre w_U1);
+            w_U2_0 = (starting_w_U2-> pre w_U2);
+            reverted = false;
+        else
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+            w_U1_0 = (starting_w_U1 -> pre w_U1);
+            w_U2_0 = (starting_w_U2-> pre w_U2);
+            reverted = true;
+        fi
+    elsif sender = U1 then
+        if (starting_w_U1 -> pre w_U1) >= amount then
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+            w_U1_0 = (starting_w_U1 -> pre w_U1) - amount;
+            w_U2_0 = (starting_w_U2-> pre w_U2);
+            reverted = false;
+        else
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+            w_U1_0 = (starting_w_U1 -> pre w_U1);
+            w_U2_0 = (starting_w_U2-> pre w_U2);
+            reverted = true;
+        fi
+    elsif sender = U2 then
+        if (starting_w_U2 -> pre w_U2) >= amount then
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+            w_U1_0 = (starting_w_U1 -> pre w_U1);
+            w_U2_0 = (starting_w_U2-> pre w_U2) - amount;
+            reverted = false;
+        else
+            w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+            w_U1_0 = (starting_w_U1 -> pre w_U1);
+            w_U2_0 = (starting_w_U2-> pre w_U2);
+            reverted = true;
+        fi
+    else
+        w_Blacklist_0 = (starting_w_Blacklist -> pre w_Blacklist);
+        w_U1_0 = (starting_w_U1 -> pre w_U1);
+        w_U2_0 = (starting_w_U2-> pre w_U2) - amount;
+        reverted = true;
+    fi
+    if receiver = Blacklist then
+        w_Blacklist = w_Blacklist_0 + amount;
+        w_U1 = w_U1_0;
+        w_U2 = w_U2_0;
+    elsif receiver = U1 then
+        w_Blacklist = w_Blacklist_0;
+        w_U1 = w_U1_0 + amount;
+        w_U2 = w_U2_0;
+    elsif receiver = U1 then
+        w_Blacklist = w_Blacklist_0;
+        w_U1 = w_U1_0;
+        w_U2 = w_U2_0 + amount;
+    else
+        w_Blacklist = (starting_w_Blacklist -> pre w_Blacklist);
+        w_U1 = (starting_w_U1 -> pre w_U1);
+        w_U2 = (starting_w_U2-> pre w_U2);
+        /* TODO check receiver is valid also here*/
+    fi
+else /* f = read , or dummy*/
+    w_Blacklist = (starting_w_Blacklist -> pre w_Blacklist);
+    w_U1 = (starting_w_U1 -> pre w_U1);
+    w_U2 = (starting_w_U2-> pre w_U2);
+fi
+tel
+
+  node blacklist (xa:int; xn:int; 
+    f:blacklist_functions; amount:int; 
+    starting_w: int; starting_w_U1: int; starting_w_U2: int;) returns();
+  (*@contract
+  assume starting_w >= 0;
+  assume starting_w_U1 >= 0;
+  assume starting_w_U2 >= 0;
+  *)
+  var w: int;
+  var w_U1 : int;
+  var w_U2 : int;
+  let
+    if f = receive then
+        if ((xa = 1 or xa = 2) /* require user is legit */
+                and
+                xn >= 0
+                and
+                (   /* implicit require msg.sender has enough funds to send 'xn' (because of payable) */
+                    ( not(xa = 1) or (starting_w_U1 -> pre w_U1) >= xn )
+                    and
+                    ( not(xa = 2) or (starting_w_U2 -> pre w_U2) >= xn )
+                )
+                ) then  
+            w = (starting_w -> pre w) + xn;
+            if (xa = 1) then
+                w_U1 = (starting_w_U1 -> pre w_U1) - xn;
+                w_U2 = (starting_w_U2 -> pre w_U2);
+            else
+                w_U1 = (starting_w_U2 -> pre w_U1);
+                w_U2 = (starting_w_U2 -> pre w_U2) - xn;
+            fi
+        else
+            w = (starting_w -> pre w);
+            w_U1 = (starting_w_U1 -> pre w_U1);
+            w_U2 = (starting_w_U2 -> pre w_U2);
+        fi
+    elsif f = pay then
+        if (not(xa = 1)  /* require (msg.sender!=1) */
+                and (xa = 1 or xa = 2)  /* require user is legit */
+                and (xn = 0)    /* not payable */
+                and amount <= (starting_w -> pre w) /* implicit require amount <= balance  (because of transfer) */
+                and amount >= 0
+                ) then        
+            w = (starting_w -> pre w) - amount;
+            if (xa = 1) then
+                w_U1 = (starting_w_U1 -> pre w_U1) + amount;
+                w_U2 = (starting_w_U2 -> pre w_U2);
+            else
+                w_U1 = (starting_w_U2 -> pre w_U1);
+                w_U2 = (starting_w_U2 -> pre w_U2) + amount;
+            fi
+        else    /* require fails */
+            w = (starting_w -> pre w);
+            w_U1 = (starting_w_U1 -> pre w_U1);
+            w_U2 = (starting_w_U2 -> pre w_U2);
+        fi
+    else /* dummy */
+        w = (starting_w -> pre w);
+        w_U1 = (starting_w_U1 -> pre w_U1);
+        w_U2 = (starting_w_U2 -> pre w_U2);
+    fi
+
+    --%PROPERTY /* liquidity1_nonliquid */
+    forall (xa_tx: int;)
+        (
+            not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+        )
+        or
+    exists (
+            xn_tx: int; amount_tx: int; f_tx: blacklist_functions;  /* Transition vars */
+            w_nx: int; w_U1_nx: int; w_U2_nx: int; /* Next state vars */
+            ) 
+        (
+        (   /* condition   (<tx>balance[xa] == balance[xa]  + balance) */
+            (not(xa_tx = 1) or w_U1_nx = w_U1 + w)
+            and 
+            (not(xa_tx = 2) or w_U2_nx = w_U2 + w)
+        )
+        and (   /* step_trans */
+        
+            if f_tx = receive then
+                if ((xa_tx = 1 or xa_tx = 2) /* require user is legit */
+                        and
+                        (xn_tx >= 0) and
+                        (   /* implicit require msg.sender has enough funds to send 'amount' (because of payable) */
+                            ( not(xa_tx = 1) or w_U1 >= xn_tx )
+                            and
+                            ( not(xa_tx = 2) or w_U2 >= xn_tx )
+                        )
+                        ) then  
+                    w_nx = w + xn_tx 
+                        and
+                    if (xa_tx = 1) then
+                        w_U1_nx = w_U1 - xn_tx
+                            and
+                        w_U2_nx = w_U2
+                    else
+                        w_U1_nx = w_U1
+                            and
+                        w_U2_nx = w_U2 - xn_tx
+                else
+                    w_nx = w
+                        and
+                    w_U1_nx = w_U1
+                        and
+                    w_U2_nx = w_U2
+            else if f_tx = pay then
+                if not(xa_tx = 1) and
+                        (xn_tx = 0) 
+                        and (xa_tx = 1 or xa_tx = 2)
+                        and amount_tx <= w 
+                        and amount_tx >= 0
+                        then        
+                    w_nx = w - amount_tx
+                        and
+                    if (xa_tx = 1) then
+                        w_U1_nx = w_U1 + amount_tx
+                            and
+                        w_U2_nx = w_U2
+                    else
+                        w_U1_nx = w_U1
+                            and
+                        w_U2_nx = w_U2 + amount_tx
+                else   
+                    w_nx = w
+                        and 
+                    w_U1_nx = w_U1
+                        and
+                    w_U2_nx = w_U2
+            else /* dummy */
+                w_nx = w
+                    and 
+                w_U1_nx = w_U1
+                    and
+                w_U2_nx = w_U2      
+        )
+        );
+        
+    --%PROPERTY /* liquidity2_liquid */
+    forall (xa_tx: int; xn_tx: int;)
+        (
+            not (xa_tx = 1 or xa_tx = 2) /* user is legit*/
+                or
+            (xa_tx = 1) /* xa != 1 (antecedent) */
+        )
+            or
+    exists (
+            xn_tx: int; amount_tx: int; f_tx: blacklist_functions;  /* Transition vars */
+            w_nx: int; w_U1_nx: int; w_U2_nx: int; /* Next state vars */
+            ) 
+        (
+        (   /* condition   (<tx>balance[xa] == balance[xa]  + balance) */
+            (not(xa_tx = 1) or w_U1_nx = w_U1 + w)
+            and 
+            (not(xa_tx = 2) or w_U2_nx = w_U2 + w)
+        )
+        and (   /* step_trans */
+        
+            if f_tx = receive then
+                if ((xa_tx = 1 or xa_tx = 2) /* require user is legit */
+                        and
+                        (xn_tx >= 0)
+                        and
+                        (   /* implicit require msg.sender has enough funds to send 'amount' (because of payable) */
+                            ( not(xa_tx = 1) or w_U1 >= xn_tx )
+                            and
+                            ( not(xa_tx = 2) or w_U2 >= xn_tx )
+                        )
+                        ) then  
+                    w_nx = w + xn_tx 
+                        and
+                    if (xa_tx = 1) then
+                        w_U1_nx = w_U1 - xn_tx
+                            and
+                        w_U2_nx = w_U2
+                    else
+                        w_U1_nx = w_U1
+                            and
+                        w_U2_nx = w_U2 - xn_tx
+                else
+                    w_nx = w
+                        and
+                    w_U1_nx = w_U1
+                        and
+                    w_U2_nx = w_U2
+            else if f_tx = pay then
+                if not(xa_tx = 1)  
+                        and (xa_tx = 1 or xa_tx = 2)
+                        and amount_tx <= w 
+                        and amount_tx >= 0
+                        and xn_tx = 0
+                        then        
+                    w_nx = w - amount_tx
+                        and
+                    if (xa_tx = 1) then
+                        w_U1_nx = w_U1 + amount_tx
+                            and
+                        w_U2_nx = w_U2
+                    else
+                        w_U1_nx = w_U1
+                            and
+                        w_U2_nx = w_U2 + amount_tx
+                else   
+                    w_nx = w
+                        and 
+                    w_U1_nx = w_U1
+                        and
+                    w_U2_nx = w_U2
+            else /* dummy */
+                w_nx = w
+                    and 
+                w_U1_nx = w_U1
+                    and
+                w_U2_nx = w_U2      
+        )
+        )
+    ;    
+    tel

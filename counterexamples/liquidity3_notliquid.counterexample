@@ -1,0 +1,81 @@
+
+
+STATE 0
+	balance = 0
+	count = 0
+	maxCount = 0
+	owner = 0
+	user_balance[0] = 0
+	user_balance[1] = 1
+	user_balance[2] = 0
+
+
+TRANSACTION 0 => 1
+	msg.sender = 1
+	msg.value = 1
+
+
+STATE 1
+	balance = 1
+	block.number = 0
+	count = 0
+	err = false
+	maxCount = 3
+	owner = 1
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
+
+
+TRANSACTION 1 => 2
+	f = pay
+	msg.sender = 1
+	msg.value = 0
+
+
+STATE 2
+	balance = 1
+	block.number = 0
+	count = 1
+	err = false
+	maxCount = 3
+	owner = 1
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
+
+
+TRANSACTION 2 => 3
+	f = pay
+	msg.sender = 1
+	msg.value = 0
+
+
+STATE 3
+	balance = 1
+	block.number = 0
+	count = 2
+	err = false
+	maxCount = 3
+	owner = 1
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
+
+
+TRANSACTION 3 => 4
+	f = pay
+	msg.sender = 1
+	msg.value = 0
+
+
+STATE 4
+	balance = 1
+	block.number = 0
+	count = 3
+	err = false
+	maxCount = 3
+	owner = 1
+	user_balance[0] = 0
+	user_balance[1] = 0
+	user_balance[2] = 0
